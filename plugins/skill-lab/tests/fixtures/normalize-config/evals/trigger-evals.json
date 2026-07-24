@@ -9,11 +9,7 @@
         "should_trigger": true,
         "target_skill": "normalize-config"
       },
-      "tags": [
-        "deterministic",
-        "env",
-        "positive"
-      ],
+      "tags": ["deterministic", "env", "positive"],
       "split": "train",
       "rationale": "The prompt asks for deterministic normalization of a .env-style config."
     },
@@ -24,11 +20,7 @@
         "should_trigger": true,
         "target_skill": "normalize-config"
       },
-      "tags": [
-        "deterministic",
-        "sorting",
-        "positive"
-      ],
+      "tags": ["deterministic", "sorting", "positive"],
       "split": "validation",
       "rationale": "The user describes the exact normalize-config behavior: lowercase keys and sorted KEY=value output."
     },
@@ -38,10 +30,7 @@
       "expected": {
         "should_trigger": false
       },
-      "tags": [
-        "negative",
-        "writing"
-      ],
+      "tags": ["negative", "writing"],
       "split": "held-out",
       "rationale": "The request is subjective writing, not config normalization."
     }

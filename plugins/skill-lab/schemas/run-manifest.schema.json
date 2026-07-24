@@ -23,12 +23,7 @@
     },
     "workflow": {
       "type": "string",
-      "enum": [
-        "create",
-        "evaluate",
-        "repair",
-        "compare"
-      ]
+      "enum": ["create", "evaluate", "repair", "compare"]
     },
     "skill_name": {
       "type": "string",
@@ -56,9 +51,7 @@
     },
     "budgets": {
       "type": "object",
-      "required": [
-        "max_iterations"
-      ],
+      "required": ["max_iterations"],
       "properties": {
         "max_iterations": {
           "type": "integer",
@@ -90,11 +83,7 @@
   "definitions": {
     "checkpoint": {
       "type": "object",
-      "required": [
-        "id",
-        "path",
-        "created_at"
-      ],
+      "required": ["id", "path", "created_at"],
       "properties": {
         "id": {
           "type": "string",
@@ -121,12 +110,7 @@
         },
         "status": {
           "type": "string",
-          "enum": [
-            "created",
-            "evaluated",
-            "rejected",
-            "selected"
-          ]
+          "enum": ["created", "evaluated", "rejected", "selected"]
         }
       },
       "additionalProperties": true

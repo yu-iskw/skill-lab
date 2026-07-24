@@ -30,4 +30,4 @@ High-value workflow with real-medium verification and strict hard gates.
 - Architecture notes: `references/architecture.md`
 - Security notes: `references/security.md`
 - Validation helper: `scripts/validate.sh`
-- Evals and fixtures under `evals/`
+- Add `evals/` when the skill needs trigger or output evaluation suites

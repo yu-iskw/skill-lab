@@ -50,7 +50,7 @@ Do NOT:
   "package": {
     "skill_name": "",
     "target_directory": "",
-    "files_written": [{"path": "", "purpose": "", "why_needed": ""}]
+    "files_written": [{ "path": "", "purpose": "", "why_needed": "" }]
   },
   "instruction_classification": {
     "hard_gates": [],
@@ -58,7 +58,7 @@ Do NOT:
     "preferences": []
   },
   "portability_notes": [],
-  "validation": {"checks_run": [], "passed": true, "issues": []},
+  "validation": { "checks_run": [], "passed": true, "issues": [] },
   "next_steps": []
 }
 ```

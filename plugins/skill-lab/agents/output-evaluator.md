@@ -44,7 +44,13 @@ Do NOT:
       "observed": "",
       "passed": false,
       "score": 0,
-      "evidence": [{"type": "file|command|quote|absence|reasoned", "reference": "", "summary": ""}],
+      "evidence": [
+        {
+          "type": "file|command|quote|absence|reasoned",
+          "reference": "",
+          "summary": ""
+        }
+      ],
       "severity": "hard|quality|info",
       "likely_cause": "",
       "minimal_fix": "",

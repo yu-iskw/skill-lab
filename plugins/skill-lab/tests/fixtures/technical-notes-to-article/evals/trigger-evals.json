@@ -9,11 +9,7 @@
         "should_trigger": true,
         "target_skill": "technical-notes-to-article"
       },
-      "tags": [
-        "writing",
-        "evidence",
-        "positive"
-      ],
+      "tags": ["writing", "evidence", "positive"],
       "split": "train",
       "rationale": "The request asks to transform rough technical notes into an article while preserving evidence."
     },
@@ -24,11 +20,7 @@
         "should_trigger": true,
         "target_skill": "technical-notes-to-article"
       },
-      "tags": [
-        "writing",
-        "uncertainty",
-        "positive"
-      ],
+      "tags": ["writing", "uncertainty", "positive"],
       "split": "validation",
       "rationale": "The prompt needs article shaping plus explicit handling of uncertain evidence."
     },
@@ -38,10 +30,7 @@
       "expected": {
         "should_trigger": false
       },
-      "tags": [
-        "negative",
-        "config"
-      ],
+      "tags": ["negative", "config"],
       "split": "held-out",
       "rationale": "The request is deterministic config normalization, not article writing."
     }

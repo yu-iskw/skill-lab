@@ -7,12 +7,5 @@
   },
   "license": "Apache-2.0",
   "repository": "https://github.com/yu-iskw/skill-lab",
-  "keywords": [
-    "skills",
-    "evaluation",
-    "agent-skills",
-    "validation"
-  ],
-  "agents": "./agents/",
-  "skills": "./skills/"
+  "keywords": ["skills", "evaluation", "agent-skills", "validation"]
 }

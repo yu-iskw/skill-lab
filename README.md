@@ -29,16 +29,16 @@ Skill Lab is a thin workflow-orchestration plugin: reusable domain core as porta
 
 ## Plugin features (MVP)
 
-| Surface | Purpose |
-| --- | --- |
-| `create` skill | Intent → minimal Skill → validate → evaluate → one repair → best checkpoint |
-| `evaluate` skill | Non-mutating evaluation with evidence |
-| `intent-compiler` | Structured intent contract |
-| `skill-architect` | Portable package generation |
-| `output-evaluator` | Independent rubric assessment |
-| `skill-lab-validate` | Deterministic package + eval structure checks |
-| `skill-lab-eval` | Eval schema checks + score aggregation |
-| `skill-lab-compare` | Best-valid-checkpoint selection |
+| Surface              | Purpose                                                                     |
+| -------------------- | --------------------------------------------------------------------------- |
+| `create` skill       | Intent → minimal Skill → validate → evaluate → one repair → best checkpoint |
+| `evaluate` skill     | Non-mutating evaluation with evidence                                       |
+| `intent-compiler`    | Structured intent contract                                                  |
+| `skill-architect`    | Portable package generation                                                 |
+| `output-evaluator`   | Independent rubric assessment                                               |
+| `skill-lab-validate` | Deterministic package + eval structure checks                               |
+| `skill-lab-eval`     | Eval schema checks + score aggregation                                      |
+| `skill-lab-compare`  | Best-valid-checkpoint selection                                             |
 
 ## Development
 

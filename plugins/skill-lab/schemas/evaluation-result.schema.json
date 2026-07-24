@@ -112,11 +112,7 @@
         },
         "severity": {
           "type": "string",
-          "enum": [
-            "hard",
-            "soft",
-            "info"
-          ]
+          "enum": ["hard", "soft", "info"]
         },
         "case_id": {
           "type": "string"
@@ -129,11 +125,7 @@
     },
     "checkpoint": {
       "type": "object",
-      "required": [
-        "id",
-        "path",
-        "score"
-      ],
+      "required": ["id", "path", "score"],
       "properties": {
         "id": {
           "type": "string",

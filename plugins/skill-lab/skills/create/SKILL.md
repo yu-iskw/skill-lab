@@ -13,17 +13,10 @@ Create a new Agent Skill as a minimal, valid package. Orchestrate specialist age
 2. Delegate to the `intent-compiler` subagent for a structured contract and assumptions.
 3. Route complexity (Level 1 / 2 / 3). See `references/complexity-routing.md`.
 4. Delegate to the `skill-architect` subagent for the smallest valid package.
-5. Validate:
-
-```bash
-"$CLAUDE_PLUGIN_ROOT/bin/skill-lab-validate" <skill-dir>
-```
-
-6. Evaluate by level:
-   - Level 1: lightweight review + validator evidence
-   - Level 2+: isolated `output-evaluator`; run trigger evals if present
+5. Validate with `"$CLAUDE_PLUGIN_ROOT/bin/skill-lab-validate" <skill-dir>`. If package hard gates fail, skip subjective evaluation and record evidence.
+6. Evaluate by level: Level 1 uses lightweight review plus validator evidence; Level 2+ uses an isolated `output-evaluator` and runs trigger evals when present.
 7. At most **one** bounded repair iteration for MVP. Re-validate after repair.
-8. Select the highest-scoring **valid** checkpoint with `skill-lab-compare`.
+8. Select the highest-scoring **valid** checkpoint with `"$CLAUDE_PLUGIN_ROOT/bin/skill-lab-compare"`.
 9. Write run evidence under `.skill-lab/runs/<run-id>/` (no secrets). See `references/run-artifacts.md`.
 10. Report: name, path, files, assumptions, triggers, non-triggers, validation commands, evidence, limitations, best checkpoint.
 11. **STOP** before publish, deploy, billing, delete, credential, or permission-changing actions.

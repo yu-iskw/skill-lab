@@ -72,7 +72,10 @@ add_finding() {
 	local severity="$1"
 	local code="$2"
 	local message="$3"
-	findings+=("$(skill_lab_emit_finding "${severity}" "${code}" "${message}")")
+	local finding
+	# shellcheck disable=SC2311 # emit_finding is pure jq; failures should not abort collection
+	finding="$(skill_lab_emit_finding "${severity}" "${code}" "${message}")"
+	findings+=("${finding}")
 	if [[ ${severity} == error ]]; then
 		errors=$((errors + 1))
 	fi
@@ -84,13 +87,18 @@ else
 	if ! head -n 1 "${skill_md}" | grep -qx -- '---'; then
 		add_finding error FRONTMATTER_MISSING "SKILL.md must start with YAML frontmatter"
 	else
+		# shellcheck disable=SC2311 # frontmatter helpers return empty string on miss
 		name="$(skill_lab_frontmatter_field "${skill_md}" name)"
+		# shellcheck disable=SC2311
 		description="$(skill_lab_frontmatter_field "${skill_md}" description)"
 
 		if [[ -z ${name} ]]; then
 			add_finding error NAME_MISSING "frontmatter field 'name' is required"
 		else
-			if ! skill_lab_is_valid_skill_name "${name}"; then
+			name_ok=0
+			# shellcheck disable=SC2310 # predicate intentionally captured without exiting
+			skill_lab_is_valid_skill_name "${name}" || name_ok=$?
+			if [[ ${name_ok} -ne 0 ]]; then
 				add_finding error NAME_INVALID "name must be 1-64 chars, lowercase alphanumeric with single hyphens: '${name}'"
 			fi
 			if [[ ${name} != "${dir_name}" ]]; then
@@ -171,13 +179,6 @@ if [[ -f ${skill_dir}/evals/trigger-evals.json ]]; then
 fi
 if [[ -f ${skill_dir}/evals/output-evals.json ]]; then
 	validate_eval_file "${skill_dir}/evals/output-evals.json" output-evals
-fi
-
-# Check referenced local files mentioned as relative paths under references/
-if [[ -d ${skill_dir}/references ]]; then
-	while IFS= read -r -d '' ref; do
-		:
-	done < <(find "${skill_dir}/references" -type f -print0 2>/dev/null || true)
 fi
 
 passed=true

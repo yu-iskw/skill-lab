@@ -4,11 +4,7 @@
   "title": "Skill Lab Skill State",
   "description": "Mutable state for a Skill Lab skill under evaluation. Required fields: skill_name, current_checkpoint, and checkpoints. Each checkpoint requires id, path, score, hard_gates_passed, and created_at.",
   "type": "object",
-  "required": [
-    "skill_name",
-    "current_checkpoint",
-    "checkpoints"
-  ],
+  "required": ["skill_name", "current_checkpoint", "checkpoints"],
   "properties": {
     "skill_name": {
       "type": "string",
@@ -36,13 +32,7 @@
   "definitions": {
     "checkpoint": {
       "type": "object",
-      "required": [
-        "id",
-        "path",
-        "score",
-        "hard_gates_passed",
-        "created_at"
-      ],
+      "required": ["id", "path", "score", "hard_gates_passed", "created_at"],
       "properties": {
         "id": {
           "type": "string",

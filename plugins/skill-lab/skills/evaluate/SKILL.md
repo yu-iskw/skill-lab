@@ -10,15 +10,10 @@ Evaluate an existing Agent Skill and produce evidence. Do not modify the target 
 ## Workflow
 
 1. Resolve the skill path to a directory containing `SKILL.md`.
-2. Validate the package:
-
-```bash
-"$CLAUDE_PLUGIN_ROOT/bin/skill-lab-validate" <skill-dir>
-```
-
-3. If eval files exist, validate them with `skill-lab-eval`.
+2. Validate the package with `"$CLAUDE_PLUGIN_ROOT/bin/skill-lab-validate" <skill-dir>`. If package hard gates fail, skip subjective evaluation and still emit the scorecard.
+3. If eval files exist, validate them with `"$CLAUDE_PLUGIN_ROOT/bin/skill-lab-eval" --validate-only <skill-dir>`.
 4. Delegate subjective criteria to the `output-evaluator` subagent in isolation (read/execute only).
-5. Aggregate results; use `skill-lab-compare` when multiple checkpoints exist.
+5. Aggregate results with `"$CLAUDE_PLUGIN_ROOT/bin/skill-lab-eval" --aggregate`; use `"$CLAUDE_PLUGIN_ROOT/bin/skill-lab-compare"` when multiple checkpoints exist.
 6. Write scorecard and evidence under `.skill-lab/runs/<run-id>/`.
 7. Do not modify the target Skill or its evals.
 8. Hard-gate failures cannot be offset by average score.

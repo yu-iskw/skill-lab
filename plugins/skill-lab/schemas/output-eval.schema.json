@@ -12,9 +12,7 @@
     },
     {
       "type": "object",
-      "required": [
-        "cases"
-      ],
+      "required": ["cases"],
       "properties": {
         "schema_version": {
           "type": "string"
@@ -63,9 +61,7 @@
               },
               {
                 "type": "object",
-                "required": [
-                  "path"
-                ],
+                "required": ["path"],
                 "properties": {
                   "path": {
                     "type": "string",
@@ -96,22 +92,14 @@
         },
         "split": {
           "type": "string",
-          "enum": [
-            "train",
-            "validation",
-            "held-out"
-          ]
+          "enum": ["train", "validation", "held-out"]
         }
       },
       "additionalProperties": true
     },
     "assertion": {
       "type": "object",
-      "required": [
-        "id",
-        "type",
-        "severity"
-      ],
+      "required": ["id", "type", "severity"],
       "properties": {
         "id": {
           "type": "string",
@@ -123,11 +111,7 @@
         },
         "severity": {
           "type": "string",
-          "enum": [
-            "hard",
-            "soft",
-            "info"
-          ]
+          "enum": ["hard", "soft", "info"]
         },
         "expected": {},
         "observed": {},
