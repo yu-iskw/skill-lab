@@ -10,13 +10,12 @@
     "complexity_level",
     "hard_constraints",
     "success_conditions",
-    "assumptions"
+    "assumptions",
+    "irreversible_actions",
+    "artifact_budget"
   ],
   "properties": {
-    "schema_version": {
-      "type": "string",
-      "const": "1.0.0"
-    },
+    "schema_version": { "$ref": "common.schema.json#/$defs/schemaVersion" },
     "purpose": { "type": "string", "minLength": 1 },
     "target_users": {
       "type": "array",
@@ -59,13 +58,10 @@
       "type": "array",
       "items": { "type": "string" }
     },
-    "quality_level": {
-      "type": "string",
-      "enum": ["lightweight", "standard", "rigorous"]
-    },
     "complexity_level": {
       "type": "integer",
-      "enum": [1, 2, 3]
+      "enum": [1, 2, 3],
+      "description": "L1 deterministic, L2 subjective, L3 multi-artifact. Sole complexity axis for MVP."
     },
     "invocation_examples": {
       "type": "array",
@@ -78,6 +74,12 @@
     "artifact_budget": {
       "type": "object",
       "additionalProperties": false,
+      "required": [
+        "allow_references",
+        "allow_scripts",
+        "allow_assets",
+        "require_evals"
+      ],
       "properties": {
         "allow_references": { "type": "boolean" },
         "allow_scripts": { "type": "boolean" },

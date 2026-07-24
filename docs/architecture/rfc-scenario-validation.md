@@ -39,7 +39,7 @@ Validates Approach D (hybrid Claude Code plugin: workflow skills + subagents + d
 1. `create` → `intent-compiler` → plan: L1, SKILL.md (+ tiny `scripts/` only if justified).
 2. `skill-architect` writes portable package under target `skills/<name>/`.
 3. Static validators: frontmatter schema, name rules, no undeclared dirs.
-4. Optional `evaluate`: structural fixtures only; `output-evaluator` scores pass/fail against expected exit/stdout when execution is available; otherwise static assertions.
+4. Optional `evaluate`: structural fixtures only; `output-evaluator` uses **static** assertions (MVP MUST NOT execute Skill `scripts/` for exit/stdout).
 5. No soft rubric; no human gate unless author opts in to publish.
 
 ### Checklist
@@ -178,14 +178,14 @@ MVP has **no** `improve` skill. Closest path: human edits description/triggers �
 | 4 False-positive improve | inherits | evaluate diagnosis only | **improve**, trigger-evaluator | **Yes** (trigger edits) |
 | 5 Dangerous script | any | evaluate, static validators | execution sandbox | **Yes** (waive only) |
 
-## RFC amendments implied
+## Validated constraints (already in RFC / ADR 0001)
 
-1. Freeze L1/L2/L3 artifact budgets in `intent-compiler` contract.
-2. **`evaluate` / `output-evaluator` never mutate Skill packages.**
-3. MVP create repair: capped retries on hard gates only (default max_iterations = 1 for MVP, RFC default 3 deferred).
+1. L1/L2/L3 `artifact_budget` defaults are in RFC §8; `skill-state` requires `artifact_budget` booleans.
+2. `evaluate` / `output-evaluator` never mutate Skill packages and never execute Skill `scripts/` in MVP.
+3. MVP create repair: `max_iterations = 1`.
 4. Scenario 4 is **out of MVP scope**.
-5. Dangerous-script **static** hard gate is MVP-critical.
-6. Keep generated Skills portable; Claude-only wiring stays under `plugins/skill-lab/`.
+5. Dangerous-script **static** hard gate is MVP-critical (`severity: hard` only).
+6. Generated Skills stay portable; Claude-only wiring stays under `plugins/skill-lab/`.
 
 ## Overall
 

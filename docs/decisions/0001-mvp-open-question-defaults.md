@@ -18,10 +18,21 @@ The RFC left ten open questions that must be pinned before implementation so CLI
 | Concern | MVP default |
 | --- | --- |
 | Product plugin | `plugins/skill-lab/` |
-| Shared contracts / schemas | `docs/contracts/schemas/` (source of truth); plugin copies or references them |
+| Shared contracts / schemas | `docs/contracts/schemas/` (**source of truth**). Plugin MUST symlink or CI-diff-gate `plugins/skill-lab/schemas/` — no unsynced copies. |
+| CLI package | `plugins/skill-lab/cli/` (stay under the plugin; do not invent a top-level `packages/` tree in MVP) |
 | Sample template | Keep `plugins/hello-world/` unless a later ADR removes it |
 
 Skill Lab product self-evals live under `plugins/skill-lab/evals/`.
+
+### Agent tool posture (MVP)
+
+| Agent | Tools | MUST NOT |
+| --- | --- | --- |
+| `intent-compiler` | Read-oriented | Write Skill packages |
+| `skill-architect` | Scoped write to target Skill path | Embed `.claude-plugin/`; self-grade as pass |
+| `output-evaluator` | Read + run `skill-lab-validate` | Write/Edit Skills or expected evals; **execute Skill `scripts/`** |
+
+Follow `.claude/skills/implement-sub-agents/` templates for frontmatter shape.
 
 ### 1. Implementation language
 
@@ -31,7 +42,7 @@ Skill Lab product self-evals live under `plugins/skill-lab/evals/`.
 
 ### 2. Eval location
 
-**Default (RFC Appendix A.2):** curated evals are **first-class artifacts inside the generated Skill package** at `evals/` under the Skill directory.
+**Default:** curated evals are **first-class artifacts inside the generated Skill package** at `evals/` under the Skill directory (see RFC §7 / §13).
 
 **Skill Lab product self-tests** live at `plugins/skill-lab/evals/`.
 
@@ -67,9 +78,9 @@ Persist: scores, hashes, timings, tool-use summaries, short rationales, criterio
 
 **Defaults:**
 
-- Gitignore raw traces by default.
+- **MVP:** gitignore the **entire** `.skill-lab/` directory (root `.gitignore`).
 - No secrets in persisted run records.
-- Generated Skill packages and curated evals SHOULD be version-controlled; raw traces SHOULD NOT.
+- Generated Skill packages and curated evals SHOULD be version-controlled.
 
 ### 8. Codex parity
 
@@ -101,7 +112,7 @@ Persist: scores, hashes, timings, tool-use summaries, short rationales, criterio
 - Authors used to sibling-only eval layouts must place curated suites under the Skill’s `evals/`.
 - No untrusted script execution in MVP validate.
 - No Codex eval parity until Phase 4.
-- Schema source under `docs/contracts/schemas/` needs a sync story into `plugins/skill-lab/schemas/`.
+- Schema sync is enforced via symlink or CI identity check (see Monorepo placement).
 
 ### Non-goals (MVP)
 

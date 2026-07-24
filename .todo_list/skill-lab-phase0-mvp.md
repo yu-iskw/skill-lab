@@ -9,7 +9,7 @@
 - [x] Scenario validation walkthroughs
 - [x] Architecture overview
 - [x] MVP implementation plan (`docs/superpowers/plans/2026-07-24-skill-lab-mvp.md`)
-- [ ] Commit, push, open draft PR
+- [x] Commit, push, open draft PR (#3)
 
 ## MVP implementation (follow-up; see plan tasks)
 

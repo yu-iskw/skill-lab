@@ -11,19 +11,13 @@
     "overall_score",
     "hard_gates_passed",
     "criteria",
-    "best_checkpoint",
+    "selected_checkpoint",
     "stop_reason"
   ],
   "properties": {
-    "schema_version": {
-      "type": "string",
-      "const": "1.0.0"
-    },
+    "schema_version": { "$ref": "common.schema.json#/$defs/schemaVersion" },
     "run_id": { "type": "string", "minLength": 1 },
-    "skill_name": {
-      "type": "string",
-      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
-    },
+    "skill_name": { "$ref": "common.schema.json#/$defs/skillName" },
     "overall_score": {
       "type": "number",
       "minimum": 0,
@@ -34,21 +28,10 @@
       "type": "array",
       "items": { "$ref": "#/$defs/criterionResult" }
     },
-    "best_checkpoint": {
+    "selected_checkpoint": {
       "type": ["string", "null"]
     },
-    "stop_reason": {
-      "type": "string",
-      "enum": [
-        "target_reached",
-        "budget_exhausted",
-        "plateau",
-        "same_failure_repeated",
-        "human_required",
-        "hard_gate_failed",
-        "completed"
-      ]
-    },
+    "stop_reason": { "$ref": "common.schema.json#/$defs/stopReason" },
     "remaining_human_review_points": {
       "type": "array",
       "items": { "type": "string" }

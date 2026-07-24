@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/yu-iskw/skill-lab/docs/contracts/schemas/common.schema.json",
+  "title": "Skill Lab Shared Schema Definitions",
+  "$defs": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "skillName": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "caseId": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9._-]+$"
+    },
+    "split": {
+      "type": "string",
+      "enum": ["train", "validation", "held-out"]
+    },
+    "stopReason": {
+      "type": "string",
+      "enum": [
+        "target_reached",
+        "budget_exhausted",
+        "plateau",
+        "same_failure_repeated",
+        "human_required",
+        "hard_gate_failed",
+        "completed"
+      ]
+    },
+    "mvpWorkflow": {
+      "type": "string",
+      "enum": ["create", "evaluate"]
+    },
+    "futureWorkflow": {
+      "type": "string",
+      "enum": ["improve", "diagnose-trigger", "extract-from-session"]
+    }
+  }
+}

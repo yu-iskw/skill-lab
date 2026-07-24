@@ -16,22 +16,20 @@
     "checkpoints"
   ],
   "properties": {
-    "schema_version": {
-      "type": "string",
-      "const": "1.0.0"
-    },
+    "schema_version": { "$ref": "common.schema.json#/$defs/schemaVersion" },
     "run_id": { "type": "string", "minLength": 1 },
     "workflow": {
-      "type": "string",
-      "enum": ["create", "evaluate", "improve", "diagnose-trigger", "extract-from-session"]
+      "description": "MVP writers MUST use create|evaluate only. Other values are reserved for post-MVP workflows.",
+      "oneOf": [
+        { "$ref": "common.schema.json#/$defs/mvpWorkflow" },
+        { "$ref": "common.schema.json#/$defs/futureWorkflow" }
+      ]
     },
-    "skill_name": {
-      "type": "string",
-      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
-    },
+    "skill_name": { "$ref": "common.schema.json#/$defs/skillName" },
     "platform": {
       "type": "string",
-      "enum": ["claude-code", "codex", "other"]
+      "enum": ["claude-code", "other"],
+      "description": "MVP platform is claude-code. Codex is out of MVP; use other only for non-Claude hosts."
     },
     "plugin_version": { "type": "string", "minLength": 1 },
     "model_metadata": {
@@ -55,11 +53,9 @@
         "max_iterations": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 10
-        },
-        "max_same_failure": { "type": "integer", "minimum": 1 },
-        "minimum_material_improvement": { "type": "number" },
-        "target_score": { "type": "number", "minimum": 0, "maximum": 100 }
+          "maximum": 10,
+          "description": "MVP default is 1."
+        }
       }
     },
     "checkpoints": {
@@ -78,7 +74,7 @@
         }
       }
     },
-    "stop_reason": { "type": "string" },
+    "stop_reason": { "$ref": "common.schema.json#/$defs/stopReason" },
     "selected_checkpoint": { "type": ["string", "null"] }
   }
 }

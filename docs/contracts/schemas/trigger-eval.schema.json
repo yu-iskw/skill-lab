@@ -1,21 +1,14 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/yu-iskw/skill-lab/docs/contracts/schemas/trigger-eval.schema.json",
-  "title": "Skill Lab Trigger Eval Suite",
+  "title": "Skill Lab Trigger Eval Suite (post-MVP; frozen for forward compatibility)",
+  "description": "Not consumed by MVP create/evaluate workflows. Reserved for improve/diagnose-trigger.",
   "type": "object",
   "additionalProperties": false,
   "required": ["schema_version", "skill_name", "cases"],
   "properties": {
-    "schema_version": {
-      "type": "string",
-      "const": "1.0.0"
-    },
-    "skill_name": {
-      "type": "string",
-      "minLength": 1,
-      "maxLength": 64,
-      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
-    },
+    "schema_version": { "$ref": "common.schema.json#/$defs/schemaVersion" },
+    "skill_name": { "$ref": "common.schema.json#/$defs/skillName" },
     "cases": {
       "type": "array",
       "minItems": 1,
@@ -28,11 +21,7 @@
       "additionalProperties": false,
       "required": ["id", "prompt", "expected", "split"],
       "properties": {
-        "id": {
-          "type": "string",
-          "minLength": 1,
-          "pattern": "^[A-Za-z0-9._-]+$"
-        },
+        "id": { "$ref": "common.schema.json#/$defs/caseId" },
         "prompt": { "type": "string", "minLength": 1 },
         "expected": {
           "type": "object",
@@ -40,20 +29,14 @@
           "required": ["should_trigger"],
           "properties": {
             "should_trigger": { "type": "boolean" },
-            "target_skill": {
-              "type": "string",
-              "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
-            }
+            "target_skill": { "$ref": "common.schema.json#/$defs/skillName" }
           }
         },
         "tags": {
           "type": "array",
           "items": { "type": "string", "minLength": 1 }
         },
-        "split": {
-          "type": "string",
-          "enum": ["train", "validation", "held-out"]
-        },
+        "split": { "$ref": "common.schema.json#/$defs/split" },
         "rationale": { "type": "string" }
       }
     }

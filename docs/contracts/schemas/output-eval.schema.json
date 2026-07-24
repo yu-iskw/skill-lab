@@ -6,19 +6,12 @@
   "additionalProperties": false,
   "required": ["schema_version", "skill_name", "cases"],
   "properties": {
-    "schema_version": {
-      "type": "string",
-      "const": "1.0.0"
-    },
-    "skill_name": {
-      "type": "string",
-      "minLength": 1,
-      "maxLength": 64,
-      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
-    },
+    "schema_version": { "$ref": "common.schema.json#/$defs/schemaVersion" },
+    "skill_name": { "$ref": "common.schema.json#/$defs/skillName" },
     "cases": {
       "type": "array",
       "minItems": 1,
+      "maxItems": 50,
       "items": { "$ref": "#/$defs/outputCase" }
     }
   },
@@ -28,29 +21,24 @@
       "additionalProperties": false,
       "required": ["id", "prompt", "assertions", "split"],
       "properties": {
-        "id": {
-          "type": "string",
-          "minLength": 1,
-          "pattern": "^[A-Za-z0-9._-]+$"
-        },
+        "id": { "$ref": "common.schema.json#/$defs/caseId" },
         "prompt": { "type": "string", "minLength": 1 },
         "input_files": {
           "type": "array",
+          "maxItems": 20,
           "items": { "type": "string", "minLength": 1 }
         },
         "assertions": {
           "type": "array",
           "minItems": 1,
+          "maxItems": 30,
           "items": { "$ref": "#/$defs/assertion" }
         },
         "human_review_points": {
           "type": "array",
           "items": { "type": "string" }
         },
-        "split": {
-          "type": "string",
-          "enum": ["train", "validation", "held-out"]
-        }
+        "split": { "$ref": "common.schema.json#/$defs/split" }
       }
     },
     "assertion": {
@@ -58,33 +46,42 @@
       "additionalProperties": false,
       "required": ["id", "type", "severity"],
       "properties": {
-        "id": {
-          "type": "string",
-          "minLength": 1,
-          "pattern": "^[A-Za-z0-9._-]+$"
-        },
+        "id": { "$ref": "common.schema.json#/$defs/caseId" },
         "type": {
           "type": "string",
           "enum": [
             "json-schema",
             "static",
-            "command",
-            "trace",
             "llm-rubric",
             "dangerous-script"
-          ]
+          ],
+          "description": "MVP types only. command/trace deferred until execution adapters exist."
         },
         "severity": {
           "type": "string",
           "enum": ["hard", "quality"]
         },
-        "expected": { "type": "string" },
+        "expected": {
+          "description": "For json-schema, prefer a relative path to a schema file (compile once by path/hash). Do not embed full schema JSON as a string.",
+          "type": "string"
+        },
         "minimum_score": {
           "type": "number",
           "minimum": 0,
           "maximum": 100
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "type": { "const": "dangerous-script" } },
+            "required": ["type"]
+          },
+          "then": {
+            "properties": { "severity": { "const": "hard" } }
+          }
+        }
+      ]
     }
   }
 }

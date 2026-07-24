@@ -137,7 +137,7 @@ flowchart TB
 | `evaluate` skill | Interaction/Orchestration | Load path; validate; soft-eval as allowed; write `.skill-lab/runs/` | Mutate the target Skill |
 | `intent-compiler` | Reasoning | Emit `skill-state` (`schema_version` `1.0.0`); set `complexity_level` ∈ {1,2,3} and `artifact_budget`; list assumptions & irreversible actions | Invent unjustified artifacts |
 | `skill-architect` | Reasoning | Write minimal portable package under target path; produce checkpoints | Embed `.claude-plugin/` in generated Skills; self-grade as pass |
-| `output-evaluator` | Reasoning | Score criteria with evidence; record judge model id | Write/Edit Skill files or expected eval outputs |
+| `output-evaluator` | Reasoning | Score criteria with evidence; record judge model id; read-only toward Skills | Write/Edit Skill files or expected eval outputs; **execute Skill `scripts/`** (MVP) |
 | `skill-lab-validate` | Verification | Enforce Appendix B hard gates; emit structured findings | Execute untrusted Skill scripts (MVP) |
 
 **Deferred (post-MVP):** workflows `improve`, `diagnose-trigger`, `extract-from-session`; agents `trigger-evaluator`, `adversarial-reviewer`, `repair-planner`; hooks; MCP; Codex adapter; execution sandbox.
@@ -154,7 +154,7 @@ skills/<name>/
   references/              # if artifact_budget.allow_references
   scripts/                 # if artifact_budget.allow_scripts
   assets/                  # if artifact_budget.allow_assets
-  evals/                   # curated suites (Appendix A.2 default)
+  evals/                   # curated suites (in-skill default; ADR 0001)
 ```
 
 **Adapter (Skill Lab plugin):** `plugins/skill-lab/` — workflow skills, agents, validators, plugin manifest, product self-evals. Host-specific config (judge model pin, install via `--plugin-dir`) lives here, not inside generated Skills.
@@ -173,19 +173,29 @@ skills/<name>/
 
 Downstream agents MUST NOT invent artifacts the level / `artifact_budget` does not justify.
 
+**Default `artifact_budget` by level** (intent-compiler MUST emit explicit booleans; these are the expected defaults):
+
+| Level | allow_references | allow_scripts | allow_assets | require_evals |
+| --- | --- | --- | --- | --- |
+| L1 | false | false (true only if justified) | false | false |
+| L2 | false | false | false | **true** |
+| L3 | true | optional | optional | **true** |
+
 ---
 
 ## 9. Evaluation order
 
 For each checkpoint, orchestration SHALL:
 
-1. Run **Verification** hard gates (Appendix B). If any fail → `hard_gates_passed=false`; checkpoint **invalid**.
-2. Run allowed **quality** assertions / `output-evaluator` rubrics; record criterion evidence (`severity`: `hard` | `quality`).
+1. Run **Verification** hard gates (Appendix B). If any fail → `hard_gates_passed=false`; checkpoint **invalid**; **MUST NOT** run quality / `llm-rubric` assertions for that checkpoint unless a debug flag opts in.
+2. Only when hard gates pass: run allowed **quality** assertions / `output-evaluator` rubrics; record criterion evidence (`severity`: `hard` | `quality`).
 3. Aggregate `overall_score` only as informational for **valid** checkpoints.
 4. Persist results under `.skill-lab/runs/<run-id>/` per run-manifest / evaluation-result contracts.
-5. Select **best valid** checkpoint (highest score among `hard_gates_passed=true`). If none valid → stop with `hard_gate_failed` (or escalate).
+5. Select **best valid** checkpoint (highest score among `hard_gates_passed=true`, recorded as `selected_checkpoint`). If none valid → stop with `hard_gate_failed` (or escalate).
 
 Tokens/cost fields MAY be present but MUST remain `null` unless host-exposed; implementations MUST NOT invent estimates.
+
+MVP assertion types for output suites: `static`, `json-schema`, `llm-rubric`, `dangerous-script`. `dangerous-script` assertions MUST have `severity: hard` and MUST reuse `skill-lab-validate` findings (no second tree walk).
 
 ---
 
@@ -207,70 +217,73 @@ Stop reasons include: `target_reached`, `budget_exhausted`, `plateau`, `same_fai
 
 1. MVP package validation SHALL be **schema + static** only; it MUST NOT execute untrusted Skill scripts by default.
 2. **Dangerous-script static hard gate is MVP-critical** (network exfil patterns, destructive shell, writes under `$HOME`, etc.) → hard fail with file/line evidence.
-3. `evaluate` / `output-evaluator` MAY score textual fixtures without invoking Skill scripts.
+3. MVP `evaluate` / `output-evaluator` MUST score fixtures **without** invoking Skill `scripts/` (static / textual / rubric only).
 4. Waiving a security hard fail REQUIRES explicit human approval; default CI posture is **no waive**.
-5. Persisted runs MUST NOT store secrets; raw traces SHOULD be gitignored.
+5. Persisted runs MUST NOT store secrets.
 6. Post-MVP execution adapters (if any): Docker, non-root, `--network=none`.
 
 ---
 
-## 12. Persistence (§21 summary)
+## 12. Persistence
 
-Under `.skill-lab/runs/<run-id>/`, persist: scores, hashes, timings, tool-use summaries, short rationales, criterion evidence, run manifest, selected checkpoint.
+Under `.skill-lab/runs/<run-id>/`, persist: scores, hashes, timings, tool-use summaries, short rationales, criterion evidence, run manifest, `selected_checkpoint`.
 
 - Generated Skills and curated `evals/` SHOULD be version-controlled.
-- Raw traces SHOULD NOT be version-controlled by default.
+- **MVP repo policy:** ignore the entire `.skill-lab/` directory in git (see root `.gitignore`). Scorecards stay local unless a later ADR opts into committing compact reports.
 
 ---
 
 ## 13. Contracts
 
-Frozen at `schema_version` **`1.0.0`** in `docs/contracts/schemas/`:
+Frozen at `schema_version` **`1.0.0`** in `docs/contracts/schemas/` (source of truth; see ADR 0001 sync rule):
 
-- `skill-state.schema.json`
-- `run-manifest.schema.json`
-- `evaluation-result.schema.json`
-- `trigger-eval.schema.json`
-- `output-eval.schema.json`
+| Schema | MVP consumer |
+| --- | --- |
+| `common.schema.json` | Shared `$defs` |
+| `skill-state.schema.json` | create / intent-compiler |
+| `run-manifest.schema.json` | create / evaluate |
+| `evaluation-result.schema.json` | create / evaluate |
+| `output-eval.schema.json` | create / evaluate |
+| `trigger-eval.schema.json` | **Post-MVP only** (frozen for forward compatibility; not used by create/evaluate) |
 
-**Evolution (ADR 0001):** additive anytime; breaking only with ≥20 fixtures across ≥3 fixture Skills **and** a `schema_version` bump.
+**Evolution:** ADR 0001.
 
-**Eval location (Appendix A.2):** curated evals for generated Skills live **inside** the Skill package at `evals/`. Product self-tests: `plugins/skill-lab/evals/`.
+**Eval location:** curated evals for generated Skills live **inside** the Skill package at `evals/`. Product self-tests: `plugins/skill-lab/evals/`.
 
 ---
 
-## 14. MVP scope (§26)
+## 14. MVP scope
 
-### §26.1 In scope
+### In scope
 
 - Plugin at `plugins/skill-lab/` with `create` + `evaluate`.
 - Agents: `intent-compiler`, `skill-architect`, `output-evaluator`.
 - TypeScript Node 20+ validator CLI (`skill-lab-validate`) with Appendix B gates including dangerous-script static scan.
-- Contracts above; three fixture Skills (deterministic, subjective writing, boundary/security).
+- Contracts above (MVP consumers only); three fixture Skills (deterministic, subjective writing, boundary/security).
 - Project-local / `--plugin-dir` install; sibling `skills/` discovery (+ optional `--also`).
 - MVP repair: `max_iterations = 1`.
 
-### §26.2 Out of scope
+### Out of scope
 
 Listed in §3 and deferred components in §6.
 
-### §26.3 Success criteria
+### Success criteria
 
 1. Novice request → valid minimal Skill via create path.
 2. Existing Skill evaluated **without mutation**.
 3. Deterministic failures reported with evidence.
 4. Subjective evaluation runs in a **separate** agent context.
 5. Hard-gate failures are **not** offset by aggregate score.
-6. Best valid checkpoint is selected.
+6. Best valid checkpoint is selected (`selected_checkpoint`).
 7. Completion report claims are traceable to run evidence.
 
-### §25.1 Fixture priority (implementation)
+### Fixture priority
 
-Prioritize: (1) minimal deterministic, (2) subjective writing, (5) boundary/dangerous-script; coding Skill MAY slip to Phase 2 if time-boxed.
+Prioritize: (1) minimal deterministic, (2) subjective writing, (3) boundary/dangerous-script; coding Skill MAY slip to Phase 2 if time-boxed.
 
 ---
 
-## 15. Decision (§31)
+## 15. Decision
 
 **Accepted:** Approach D hybrid plugin architecture, with monorepo amendment above.
 

@@ -1,6 +1,6 @@
 # Skill Lab
 
-Monorepo for **Skill Lab** — a Claude Code plugin that designs, evaluates, and improves Agent Skills — plus shared plugin CI and the `hello-world` sample.
+Monorepo for **Skill Lab** — a Claude Code plugin that **creates and evaluates** Agent Skills — plus shared plugin CI and the `hello-world` sample. Improvement workflows (`improve`, trigger diagnosis) are planned post-MVP.
 
 Phase 0 (RFC + contracts) is documented under [`docs/`](docs/RFC.md). MVP implementation plan: [`docs/superpowers/plans/2026-07-24-skill-lab-mvp.md`](docs/superpowers/plans/2026-07-24-skill-lab-mvp.md).
 
