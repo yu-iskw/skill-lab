@@ -15,11 +15,8 @@
 # shellcheck shell=bash
 
 # Shared eval-suite shape checks used by skill-lab-validate and skill-lab-eval.
-# Prints a JSON array of {code,message} findings to stdout. Exit 0 always when
-# the file can be read as JSON; caller decides severity. Exit 1 if JSON parse fails
-# (stdout still contains a single findings array when possible).
-
-skill_lab_cases_expr='(if type=="array" then . else .cases end)'
+# Prints a JSON array of {code,message} findings to stdout.
+# Exit 0 when the suite is valid; exit 1 when findings exist or JSON is unreadable.
 
 skill_lab_eval_suite_findings() {
 	local path="$1"
@@ -35,28 +32,29 @@ skill_lab_eval_suite_findings() {
 		return 1
 	fi
 
-	jq -c --arg kind "${kind}" '
-		(if type=="array" then . else .cases end) as $cases
-		| [] as $errs
-		| (if ($cases | type) != "array" then
-				$errs + [{code:"EVAL_CASES_MISSING", message:($kind + ": cases array is required")}]
-			elif ($cases | length) < 1 then
-				$errs + [{code:"EVAL_CASES_EMPTY", message:($kind + ": cases array must be non-empty")}]
-			else
-				$errs
-			end) as $errs
-		| (if ($errs | length) > 0 then $errs else
-				(
-					($cases
+	local findings
+	findings="$(
+		jq -c --arg kind "${kind}" '
+			def case_id:
+				if (.id | type) == "string" and (.id | length) > 0 then .id else "<missing-id>" end;
+			(if type=="array" then . else .cases end) as $cases
+			| if ($cases | type) != "array" then
+					[{code:"EVAL_CASES_MISSING", message:"\($kind): cases array is required"}]
+				elif ($cases | length) < 1 then
+					[{code:"EVAL_CASES_EMPTY", message:"\($kind): cases array must be non-empty"}]
+				else
+					(
+						$cases
+						| map(select((.id | type) == "string"))
 						| map(.id)
 						| group_by(.)
 						| map(select(length > 1) | .[0])
-						| map({code:"EVAL_DUPLICATE_ID", message:($kind + ": duplicate case id \u0027" + . + "\u0027")})
+						| map({code:"EVAL_DUPLICATE_ID", message:"\($kind): duplicate case id \(.)"})
 					)
 					+ (
 						$cases
-						| map(select(.split != null and (.split | IN("train","validation","held-out") | not)))
-						| map({code:"EVAL_SPLIT_INVALID", message:($kind + ": case \u0027" + (.id // "<missing-id>") + "\u0027 has invalid split")})
+						| map(select(.split != null and ((.split | type) != "string" or (.split | IN("train","validation","held-out") | not))))
+						| map({code:"EVAL_SPLIT_INVALID", message:"\($kind): case \(case_id) has invalid split"})
 					)
 					+ (
 						if $kind == "trigger" or $kind == "trigger-evals" then
@@ -69,7 +67,7 @@ skill_lab_eval_suite_findings() {
 									or (.split | type != "string")
 									or (.rationale | type != "string" or length < 1)
 								))
-							| map({code:"TRIGGER_CASE_INVALID", message:($kind + ": case \u0027" + (.id // "<missing-id>") + "\u0027 requires id, prompt, expected.should_trigger, tags, split, rationale")})
+							| map({code:"TRIGGER_CASE_INVALID", message:"\($kind): case \(case_id) requires id, prompt, expected.should_trigger, tags, split, rationale"})
 						elif $kind == "output" or $kind == "output-evals" then
 							$cases
 							| map(select(
@@ -80,12 +78,15 @@ skill_lab_eval_suite_findings() {
 									or (.human_review_points | type != "array")
 									or (.split | type != "string")
 								))
-							| map({code:"OUTPUT_CASE_INVALID", message:($kind + ": case \u0027" + (.id // "<missing-id>") + "\u0027 requires id, prompt, assertions, input_files, human_review_points, split")})
+							| map({code:"OUTPUT_CASE_INVALID", message:"\($kind): case \(case_id) requires id, prompt, assertions, input_files, human_review_points, split"})
 						else
 							[]
 						end
 					)
-				)
-			end)
-	' "${path}"
+				end
+		' "${path}"
+	)"
+
+	printf '%s\n' "${findings}"
+	jq -e 'length == 0' <<<"${findings}" >/dev/null
 }

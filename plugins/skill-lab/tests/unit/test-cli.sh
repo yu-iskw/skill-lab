@@ -146,6 +146,24 @@ EOF
 assert_fail "validate rejects empty trigger cases" "${validate}" --json "${tmpdir}/weak-skill"
 assert_fail "eval rejects empty trigger cases" "${eval_bin}" --validate-only "${tmpdir}/weak-skill"
 
+# Non-string case ids must fail closed (not abort jq / fail-open)
+cat >"${tmpdir}/weak-skill/evals/trigger-evals.json" <<'EOF'
+{
+  "cases": [
+    {
+      "id": 1,
+      "prompt": "x",
+      "expected": {"should_trigger": true},
+      "tags": [],
+      "split": "train",
+      "rationale": "id must be a string"
+    }
+  ]
+}
+EOF
+assert_fail "validate rejects non-string trigger id" "${validate}" --json "${tmpdir}/weak-skill"
+assert_fail "eval rejects non-string trigger id" "${eval_bin}" --validate-only "${tmpdir}/weak-skill"
+
 # Invalid JSON under --json still emits a report
 mkdir -p "${tmpdir}/bad-json/evals"
 cat >"${tmpdir}/bad-json/SKILL.md" <<'EOF'
