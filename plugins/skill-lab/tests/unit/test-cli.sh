@@ -191,6 +191,24 @@ EOF
 assert_fail "validate rejects non-object trigger case" "${validate}" --json "${tmpdir}/weak-skill"
 assert_fail "eval rejects non-object trigger case" "${eval_bin}" --validate-only "${tmpdir}/weak-skill"
 
+# Trigger tags must be strings
+cat >"${tmpdir}/weak-skill/evals/trigger-evals.json" <<'EOF'
+{
+  "cases": [
+    {
+      "id": "c1",
+      "prompt": "x",
+      "expected": {"should_trigger": true},
+      "tags": [1],
+      "split": "train",
+      "rationale": "tags items must be strings"
+    }
+  ]
+}
+EOF
+assert_fail "validate rejects non-string trigger tags" "${validate}" --json "${tmpdir}/weak-skill"
+assert_fail "eval rejects non-string trigger tags" "${eval_bin}" --validate-only "${tmpdir}/weak-skill"
+
 # Nested output-eval fields must be validated
 mkdir -p "${tmpdir}/output-skill/evals"
 cat >"${tmpdir}/output-skill/SKILL.md" <<'EOF'
@@ -262,6 +280,65 @@ description: Fixture missing the closing frontmatter delimiter on purpose.
 # Unclosed
 EOF
 assert_fail "validate rejects unclosed frontmatter" "${validate}" --json "${tmpdir}/unclosed-skill"
+
+# Folded/literal description markers must fail closed
+mkdir -p "${tmpdir}/folded-desc"
+cat >"${tmpdir}/folded-desc/SKILL.md" <<'EOF'
+---
+name: folded-desc
+description: >
+  This long description would bypass the length check if folded blocks were accepted.
+---
+
+# Folded
+EOF
+folded_out="$("${validate}" --json "${tmpdir}/folded-desc" || true)"
+folded_code="$(jq -r '.findings[] | select(.code=="DESCRIPTION_MULTILINE_UNSUPPORTED") | .code' <<<"${folded_out}")"
+assert_eq "validate rejects folded description marker" "DESCRIPTION_MULTILINE_UNSUPPORTED" "${folded_code}"
+
+# Shared remapper: validate warning → quality criterion
+mkdir -p "${tmpdir}/todo-skill"
+cat >"${tmpdir}/todo-skill/SKILL.md" <<'EOF'
+---
+name: todo-skill
+description: Fixture with unfinished placeholder markers for remapper coverage.
+---
+
+# Todo
+TODO: finish
+EOF
+todo_report="$("${validate}" --json "${tmpdir}/todo-skill" || true)"
+printf '%s\n' "${todo_report}" >"${tmpdir}/todo-report.json"
+# shellcheck source=../../lib/common.sh
+source "${root}/lib/common.sh"
+# shellcheck disable=SC2311 # remapper is pure jq; capture without aborting the suite
+remapped="$(skill_lab_criteria_from_validate_report "${tmpdir}/todo-report.json" "run-todo" "todo-skill")"
+remap_sev="$(jq -r '.criteria[0].severity' <<<"${remapped}")"
+assert_eq "criteria-from-validate maps warning to quality" "quality" "${remap_sev}"
+
+# Aggregate normalizes severity case
+cat >"${tmpdir}/criteria-upper.json" <<'EOF'
+{
+  "run_id": "run-upper",
+  "skill_name": "demo",
+  "criteria": [
+    {"criterion_id": "H1", "score": 1.0, "passed": true, "expected": "ok", "observed": "ok", "evidence": [], "severity": "HARD"}
+  ]
+}
+EOF
+upper_out="$("${eval_bin}" --aggregate "${tmpdir}/criteria-upper.json")"
+upper_sev="$(jq -r '.criteria[0].severity' <<<"${upper_out}")"
+assert_eq "aggregate lowercases severity" "hard" "${upper_sev}"
+
+# Compare rejects score outside [0,1]
+cat >"${tmpdir}/checkpoints-oob.json" <<'EOF'
+{
+  "checkpoints": [
+    {"id": "c0", "score": 100, "hard_gates_passed": true, "file_count": 1, "created_at": "2026-07-24T10:00:00Z"}
+  ]
+}
+EOF
+assert_fail "compare rejects score outside [0,1]" "${compare}" "${tmpdir}/checkpoints-oob.json"
 
 # Invalid JSON under --json still emits a report
 mkdir -p "${tmpdir}/bad-json/evals"

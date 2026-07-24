@@ -23,6 +23,7 @@
 - Create hard-fail synthesis inlined (map validate `error` → criterion `hard`); checkpoint `overall_score` → `score` mapping documented
 - Architect rename checklist + full trigger/output eval required fields; evaluator uses `$CLAUDE_PLUGIN_ROOT/bin` paths only
 - Remap validate `warning` → criterion `quality` (passing packages can still emit `FORBIDDEN_PLACEHOLDER`); never feed `warning`/`error` to `--aggregate`
+- Shared `skill_lab_criteria_from_validate_report`; compare scores must be in `[0,1]`; aggregate lowercases severity; reject folded `description` markers; string `tags[]`; CI runs `make test-unit`
 
 ### Removed
 

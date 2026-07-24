@@ -64,18 +64,19 @@ skill_lab_eval_suite_findings() {
 							| map({code:"EVAL_SPLIT_INVALID", message:"\($kind): case \(case_id) has invalid split"})
 						)
 					+ (
-							if $kind == "trigger" or $kind == "trigger-evals" then
+							if $kind == "trigger" then
 								$cases
 								| map(select(
 										(.id | type != "string" or length < 1)
 										or (.prompt | type != "string" or length < 1)
 										or (.expected.should_trigger | type != "boolean")
 										or (.tags | type != "array")
+										or ((.tags | map(select(type != "string")) | length) > 0)
 										or (.split | type != "string")
 										or (.rationale | type != "string" or length < 1)
 									))
-								| map({code:"TRIGGER_CASE_INVALID", message:"\($kind): case \(case_id) requires id, prompt, expected.should_trigger, tags, split, rationale"})
-							elif $kind == "output" or $kind == "output-evals" then
+								| map({code:"TRIGGER_CASE_INVALID", message:"\($kind): case \(case_id) requires id, prompt, expected.should_trigger, string tags[], split, rationale"})
+							elif $kind == "output" then
 								$cases
 								| map(select(
 										(.id | type != "string" or length < 1)
@@ -115,7 +116,7 @@ skill_lab_eval_suite_findings() {
 									))
 								| map({code:"OUTPUT_CASE_INVALID", message:"\($kind): case \(case_id) requires id, prompt, split, typed input_files, string human_review_points, and assertions with id/type/severity"})
 							else
-								[]
+								[{code:"EVAL_KIND_UNKNOWN", message:("unknown eval kind: " + $kind)}]
 							end
 						)
 				end

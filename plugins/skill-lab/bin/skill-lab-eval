@@ -79,7 +79,7 @@ done
 
 validate_skill_evals() {
 	local dir="$1"
-	[[ -d ${dir} ]] || skill_lab_die "not a directory: ${dir}"
+	skill_lab_require_dir "${dir}"
 	dir="$(CDPATH='' cd -- "${dir}" && pwd)"
 
 	local errors=0
@@ -156,12 +156,16 @@ aggregate_criteria() {
 					| map(select((.severity | ascii_downcase) == "hard"))
 					| length == 0 or all(.passed == true)
 				) as $hard_ok
+			| (
+					$criteria
+					| map(.severity |= ascii_downcase)
+				) as $normalized
 			| {
 					run_id: ($in.run_id // "run-local"),
 					skill_name: ($in.skill_name // "unknown"),
 					overall_score: $avg,
 					hard_gates_passed: $hard_ok,
-					criteria: $criteria,
+					criteria: $normalized,
 					best_checkpoint: ($in.best_checkpoint // null),
 					stop_reason: (
 						if $hard_ok then ($in.stop_reason // "passed")

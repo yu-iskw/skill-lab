@@ -29,7 +29,7 @@ Usage: skill-lab-compare <checkpoints.json>
 
 checkpoints.json may be an array of checkpoints or an object with a
 "checkpoints" array. Each checkpoint should include:
-  id, score, hard_gates_passed (bool), optional path, optional created_at,
+  id, score in [0,1], hard_gates_passed (bool), optional path, optional created_at,
   optional file_count (for tie-break: prefer smaller package).
 
 Prints the selected checkpoint as JSON, or {"selected": null, "reason": "..."}
@@ -52,20 +52,21 @@ case "$1" in
 	skill_lab_die "unknown option: $1"
 	;;
 *)
-	:
+	input_path="$1"
 	;;
 esac
-
-input_path="$1"
 skill_lab_require_file "${input_path}"
 skill_lab_json_ok "${input_path}"
 
 if ! jq -e '
 	(if type=="array" then . else (.checkpoints // []) end) as $all
 	| ($all | length == 0)
-		or all($all[]; (.score | type) == "number" and (.hard_gates_passed | type) == "boolean")
+		or all($all[];
+			(.score | type) == "number" and .score >= 0 and .score <= 1
+			and (.hard_gates_passed | type) == "boolean"
+		)
 ' "${input_path}" >/dev/null 2>&1; then
-	skill_lab_die "checkpoints require numeric score and boolean hard_gates_passed"
+	skill_lab_die "checkpoints require score in [0,1] and boolean hard_gates_passed"
 fi
 
 result="$(

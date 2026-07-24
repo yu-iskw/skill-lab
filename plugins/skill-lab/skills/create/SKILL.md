@@ -41,6 +41,14 @@ Create a new Agent Skill as a minimal, valid package. Orchestrate specialist age
 
 Never copy `"error"`, `"warning"`, or `"soft"` into criteria.
 
+Prefer the shared remapper (sources plugin lib) when synthesizing from a validate `--json` report:
+
+```bash
+# shellcheck source=/dev/null
+source "$CLAUDE_PLUGIN_ROOT/lib/common.sh"
+skill_lab_criteria_from_validate_report evaluations/package.json "<run-id>" "<skill-name>" > evaluations/criteria.json
+```
+
 ## Hard-fail scorecard synthesis
 
 When validate fails (`passed: false`), map **every** finding through the table above (not only errors). Example after remapping an `error` finding:

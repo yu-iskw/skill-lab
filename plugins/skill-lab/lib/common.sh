@@ -15,8 +15,6 @@
 # shellcheck shell=bash
 
 skill_lab_lib_dir="$(CDPATH='' cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck disable=SC2034 # reserved for plugin-root relative helpers
-skill_lab_plugin_root="$(CDPATH='' cd -- "${skill_lab_lib_dir}/.." && pwd)"
 
 skill_lab_die() {
 	echo "ERROR: $*" >&2
@@ -32,9 +30,58 @@ skill_lab_require_file() {
 	[[ -f ${path} ]] || skill_lab_die "missing file: ${path}"
 }
 
+skill_lab_require_dir() {
+	local path="$1"
+	[[ -d ${path} ]] || skill_lab_die "not a directory: ${path}"
+}
+
 skill_lab_json_ok() {
 	local path="$1"
 	jq -e . "${path}" >/dev/null 2>&1 || skill_lab_die "invalid JSON: ${path}"
+}
+
+# Map skill-lab-validate --json findings into aggregate-ready criteria.
+# Usage: skill_lab_criteria_from_validate_report <validate.json> <run_id> <skill_name>
+# Remaps finding severity error→hard, warning→quality.
+skill_lab_criteria_from_validate_report() {
+	local report_path="$1"
+	local run_id="$2"
+	local skill_name="$3"
+	skill_lab_require_file "${report_path}"
+	skill_lab_json_ok "${report_path}"
+	[[ -n ${run_id} && -n ${skill_name} ]] || skill_lab_die "criteria-from-validate requires run_id and skill_name"
+	jq -c --arg run_id "${run_id}" --arg skill_name "${skill_name}" '
+		(.findings // []) as $findings
+		| ($findings | length) as $n
+		| if $n < 1 then
+				error("validate report has no findings to synthesize")
+			else
+				{
+					run_id: $run_id,
+					skill_name: $skill_name,
+					criteria: (
+						$findings
+						| map({
+								criterion_id: (.code // "FINDING"),
+								score: 0,
+								passed: false,
+								expected: "package validation passes",
+								observed: (.message // ""),
+								evidence: [(.code // "FINDING")],
+								severity: (
+									if (.severity | ascii_downcase) == "error" then "hard"
+									elif (.severity | ascii_downcase) == "warning" then "quality"
+									else "info"
+									end
+								)
+							})
+					),
+					remaining_human_review_points: [
+						"Fix package findings before subjective evaluation"
+					]
+				}
+			end
+	' "${report_path}"
 }
 
 # Extract YAML-like frontmatter fields from SKILL.md without a YAML parser.
@@ -82,6 +129,12 @@ skill_lab_emit_finding() {
 	local severity="$1"
 	local code="$2"
 	local message="$3"
+	case "${severity}" in
+	error | warning) ;;
+	*)
+		skill_lab_die "finding severity must be error or warning (got '${severity}')"
+		;;
+	esac
 	jq -nc --arg severity "${severity}" --arg code "${code}" --arg message "${message}" \
 		'{severity:$severity, code:$code, message:$message}'
 }

@@ -51,30 +51,17 @@ Validate findings use `error` / `warning`; aggregate accepts only `hard|quality|
 
 Warnings can appear on **passing** packages (for example `FORBIDDEN_PLACEHOLDER` for `TODO`/`FIXME`/`TBD`/`<[A-Z_]+>`). Remap them before aggregate or the scorecard write fails.
 
+Prefer the shared remapper:
+
+```bash
+# shellcheck source=/dev/null
+source "$CLAUDE_PLUGIN_ROOT/lib/common.sh"
+skill_lab_criteria_from_validate_report evaluations/package.json "<run-id>" "<skill-name>" > evaluations/criteria.json
+```
+
 ## Hard-fail scorecard synthesis
 
-When validate fails and subjective eval is skipped, build criteria from **all** findings so `--aggregate` is not called with an empty array. Remap severities with the table above:
-
-```json
-{
-  "run_id": "<run-id>",
-  "skill_name": "<name-or-dir>",
-  "criteria": [
-    {
-      "criterion_id": "<finding.code>",
-      "score": 0,
-      "passed": false,
-      "expected": "package validation passes",
-      "observed": "<finding.message>",
-      "evidence": ["<finding.code>"],
-      "severity": "hard"
-    }
-  ],
-  "remaining_human_review_points": [
-    "Fix package hard gates before subjective evaluation"
-  ]
-}
-```
+When validate fails and subjective eval is skipped, build criteria from **all** findings so `--aggregate` is not called with an empty array. Use `skill_lab_criteria_from_validate_report` (above) or remap manually: `error`→`hard`, `warning`→`quality`.
 
 ## Checkpoint payload
 

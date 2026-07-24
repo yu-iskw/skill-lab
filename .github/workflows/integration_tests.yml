@@ -11,6 +11,17 @@ permissions:
   contents: read
 
 jobs:
+  skill-lab-unit:
+    name: Skill Lab CLI Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+      - name: Run Skill Lab unit tests
+        run: make test-unit
+
   plugin-install-test:
     name: Plugin Install Integration Test
     runs-on: ubuntu-latest
