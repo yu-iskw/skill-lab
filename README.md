@@ -1,74 +1,56 @@
-# Claude Plugin Monorepo Template
+# Skill Lab
 
-Template repository for bootstrapping high-quality Claude Code plugins with shared CI/CD and testing infrastructure.
+Claude Code plugin for designing, evaluating, diagnosing, and improving Agent Skills.
 
-## Key Features
+Skill Lab is a thin workflow-orchestration plugin: reusable domain core as portable Agent Skills, independent reasoning via Claude Code subagents, and objective checks via deterministic scripts (`bash` + `jq`).
 
-- **Standard Plugin Layout**: Follows best practices for Skills, Agents, Hooks, MCP, and LSP.
-- **Monorepo Ready**: Designed to host multiple plugins under the `plugins/` directory.
-- **Comprehensive Examples**: The `hello-world` plugin demonstrates every available extension point.
-- **Shared CI/CD**: Unified quality checks via `trunk` and GitHub Actions.
-- **Integration Tests**: Automated smoke tests that validate manifest schemas, component discovery, and **plugin installation** (marketplace add + install + list/validate) across all plugins.
-
-## Repository Layout
+## Repository layout
 
 ```text
 .
-├── plugins/                     # Container for all plugins
-│   └── hello-world/             # Comprehensive sample plugin
-│       ├── .claude-plugin/      # Plugin metadata (plugin.json)
-│       ├── agents/              # Custom agent definitions
-│       ├── skills/              # Model-invoked skills (SKILL.md)
-│       ├── hooks/               # Event hook configurations
-│       ├── .mcp.json            # MCP server configuration
-│       └── .lsp.json            # LSP server configuration
-├── integration_tests/           # Shared testing harness
-│   ├── run.sh                   # Test orchestrator (scans plugins/)
-│   ├── validate-manifest.sh     # Manifest JSON schema validator
-│   └── ...
-├── .github/workflows/           # GitHub Actions (Lint, Integration Tests)
-├── Makefile                     # Task runner
-└── README.md
+├── plugins/
+│   └── skill-lab/           # Product plugin
+├── integration_tests/       # Shared plugin smoke tests
+├── docs/                    # RFC and architecture notes
+├── .claude-plugin/          # Marketplace registry
+└── Makefile
 ```
 
 ## Quickstart
 
-1.  **Create a new repository** from this template.
-2.  **Explore the sample plugin** in `plugins/hello-world/` to see how components are defined.
-3.  **Run local checks**:
-    ```bash
-    make lint
-    make test-integration-docker
-    ```
+1. Install from this marketplace (or load with `--plugin-dir plugins/skill-lab`).
+2. Run `/skill-lab:create` with a short skill request, or `/skill-lab:evaluate path/to/skill`.
+3. Local checks:
+
+```bash
+./plugins/skill-lab/tests/unit/test-cli.sh
+./integration_tests/run.sh --manifest-only --verbose
+```
+
+## Plugin features (MVP)
+
+| Surface | Purpose |
+| --- | --- |
+| `create` skill | Intent → minimal Skill → validate → evaluate → one repair → best checkpoint |
+| `evaluate` skill | Non-mutating evaluation with evidence |
+| `intent-compiler` | Structured intent contract |
+| `skill-architect` | Portable package generation |
+| `output-evaluator` | Independent rubric assessment |
+| `skill-lab-validate` | Deterministic package + eval structure checks |
+| `skill-lab-eval` | Eval schema checks + score aggregation |
+| `skill-lab-compare` | Best-valid-checkpoint selection |
 
 ## Development
 
-### Adding a New Plugin
+See [CONTRIBUTING.md](CONTRIBUTING.md) and [plugins/skill-lab/README.md](plugins/skill-lab/README.md).
 
-Create a new directory in `plugins/` following the [Standard Plugin Layout](https://code.claude.com/docs/en/plugins-reference#standard-plugin-layout):
+Integration tests auto-discover plugins under `plugins/` that contain `.claude-plugin/plugin.json`.
 
-- `plugins/<name>/.claude-plugin/plugin.json`: Required manifest.
-- `plugins/<name>/skills/`: Agent Skills folder.
-- `plugins/<name>/agents/`: Subagent markdown files.
-- `plugins/<name>/hooks/`: Event hook configurations.
-- `plugins/<name>/.mcp.json`: MCP configurations.
-- `plugins/<name>/.lsp.json`: LSP configurations.
-
-### Testing
-
-The integration test runner (`./integration_tests/run.sh`) automatically discovers all directories in `plugins/` that contain a `.claude-plugin/plugin.json` file.
-
-- Run all tests: `./integration_tests/run.sh`
-- Verbose output: `./integration_tests/run.sh --verbose`
-- Skip loading tests (if Claude CLI is not installed): `./integration_tests/run.sh --skip-loading`
-
-Docker integration tests (`make test-integration-docker`) run the same suite inside a container and additionally run a **plugin install** test: they add the workspace as a marketplace, install each plugin with `claude plugin install`, and verify with `claude plugin list`. The same Docker flow runs in CI (job `plugin-install-docker`).
-
-## CI/CD
-
-- **Trunk Check**: Runs linters and static analysis on every PR.
-- **Integration Tests**: Automatically validates every plugin in the `plugins/` directory.
+```bash
+make lint
+make test-integration-docker
+```
 
 ## License
 
-Apache License 2.0. See `LICENSE`.
+Apache License 2.0. See [LICENSE](LICENSE).

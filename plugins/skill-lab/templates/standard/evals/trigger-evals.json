@@ -1,0 +1,27 @@
+{
+  "schema_version": "0.1",
+  "suite_id": "example-standard-trigger",
+  "cases": [
+    {
+      "id": "trigger-positive-001",
+      "prompt": "Replace with a prompt that should activate this skill",
+      "expected": {
+        "should_trigger": true,
+        "target_skill": "standard"
+      },
+      "tags": ["positive"],
+      "split": "validation",
+      "rationale": "Explicit request matching the skill purpose"
+    },
+    {
+      "id": "trigger-negative-001",
+      "prompt": "Replace with an adjacent task that must not activate this skill",
+      "expected": {
+        "should_trigger": false
+      },
+      "tags": ["negative", "adjacent"],
+      "split": "held-out",
+      "rationale": "Adjacent terminology without matching intent"
+    }
+  ]
+}
