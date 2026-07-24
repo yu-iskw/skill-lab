@@ -6,68 +6,66 @@ Skill Lab is a thin workflow-orchestration plugin: reusable domain core as porta
 
 ## End-to-end workflow
 
-The plugin exposes two entry points. `/skill-lab:create` generates and may repair a Skill, while `/skill-lab:evaluate` inspects an existing Skill without modifying it. Both converge on deterministic validation, evidence-backed scoring, and best-valid-checkpoint selection.
+The primary lifecycle starts by creating a new Skill or updating an existing Skill. The resulting Skill is then validated and evaluated. When evidence identifies a correctable problem, the create workflow may perform one bounded update before selecting the best valid checkpoint. `/skill-lab:evaluate` can also evaluate an existing Skill independently without modifying it.
 
 ```mermaid
 flowchart TD
-    user["User request"]
-    create["/skill-lab:create"]
-    evaluate["/skill-lab:evaluate"]
+    request["User request"]
+    operation{"Create or update a Skill?"}
+    create["Create a new Skill"]
+    update["Update an existing Skill"]
+    collect["Collect intent, constraints, and acceptance criteria"]
+    compile["Run intent-compiler"]
+    safety{"Safe to continue?"}
+    stop["Stop or produce a documentation-only plan"]
+    architect["Run skill-architect"]
+    skill["Created or updated Skill package"]
+    validate["Run skill-lab-validate"]
+    valid{"Package hard gates pass?"}
+    findings["Record validation findings"]
+    evaluate["Run output-evaluator"]
+    aggregate["Run skill-lab-eval aggregate"]
+    acceptable{"Meets acceptance criteria?"}
+    repair{"Bounded update available?"}
+    revise["Apply one bounded Skill update"]
+    checkpoint["Build checkpoint metadata"]
+    compare["Run skill-lab-compare"]
+    select["Select the best valid checkpoint"]
+    evidence["Persist scorecard and run evidence"]
+    report["Report the Skill, score, assumptions, and limitations"]
+    standalone["/skill-lab:evaluate existing Skill"]
 
-    user --> create
-    user --> evaluate
-
-    create --> collect["Collect request and constraints"]
-    collect --> intent["Run intent-compiler"]
-    intent --> route["Determine complexity level"]
-    route --> safety{"Safe to continue?"}
-
-    safety -->|"No"| stop["Stop or produce a documentation-only plan"]
-    safety -->|"Yes"| architect["Run skill-architect"]
-
-    architect --> createValidate["Run skill-lab-validate"]
-    createValidate --> createValid{"Package valid?"}
-
-    createValid -->|"No"| createSynthesize["Synthesize criteria from validation findings"]
-    createValid -->|"Yes"| createEvaluator["Run output-evaluator"]
-
-    createSynthesize --> createAggregate["Run skill-lab-eval aggregate"]
-    createEvaluator --> createAggregate
-
-    createAggregate --> repair{"Perform bounded repair?"}
-
-    repair -->|"Yes"| repairStep["Perform one repair"]
-    repairStep --> revalidate["Run skill-lab-validate again"]
-    revalidate --> checkpoints["Build checkpoint records"]
-
-    repair -->|"No"| checkpoints
-
-    checkpoints --> compare["Run skill-lab-compare"]
-    compare --> select["Select best valid checkpoint"]
-    select --> createEvidence["Persist run evidence"]
-    createEvidence --> createReport["Report created Skill and limitations"]
-
-    evaluate --> resolve["Resolve directory containing SKILL.md"]
-    resolve --> evaluateValidate["Run skill-lab-validate"]
-    evaluateValidate --> evaluateValid{"Package valid?"}
-
-    evaluateValid -->|"No"| evaluateSynthesize["Synthesize criteria from validation findings"]
-    evaluateValid -->|"Yes"| evaluateEvaluator["Run output-evaluator"]
-
-    evaluateSynthesize --> evaluateAggregate["Run skill-lab-eval aggregate"]
-    evaluateEvaluator --> evaluateAggregate
-
-    evaluateAggregate --> multiple{"Multiple checkpoints?"}
-
-    multiple -->|"Yes"| evaluateCompare["Run skill-lab-compare"]
-    multiple -->|"No"| evaluateEvidence["Persist scorecard and evidence"]
-
-    evaluateCompare --> evaluateEvidence
-    evaluateEvidence --> evaluateReport["Report evaluation results"]
-    evaluateReport --> unchanged["Do not modify the target Skill"]
+    request --> operation
+    operation -->|"Create"| create
+    operation -->|"Update"| update
+    create --> collect
+    update --> collect
+    collect --> compile
+    compile --> safety
+    safety -->|"No"| stop
+    safety -->|"Yes"| architect
+    architect --> skill
+    skill --> validate
+    validate --> valid
+    valid -->|"No"| findings
+    valid -->|"Yes"| evaluate
+    findings --> repair
+    evaluate --> aggregate
+    aggregate --> acceptable
+    acceptable -->|"Yes"| checkpoint
+    acceptable -->|"No"| repair
+    repair -->|"Yes"| revise
+    repair -->|"No"| checkpoint
+    revise --> skill
+    checkpoint --> compare
+    compare --> select
+    select --> evidence
+    evidence --> report
+    stop --> report
+    standalone --> validate
 ```
 
-A failed hard gate cannot be offset by a high average score. The create workflow permits at most one bounded repair, and the evaluate workflow never modifies the target Skill.
+Evaluation follows creation or update in the primary workflow. A failed hard gate cannot be offset by a high average score, only one bounded update is permitted during creation, and standalone evaluation never modifies the target Skill.
 
 ## Repository layout
 
