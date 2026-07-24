@@ -22,7 +22,7 @@ Evaluate an existing Agent Skill and produce evidence. Do not modify the target 
 
 - Missing or invalid `SKILL.md` / frontmatter
 - Name/directory mismatch
-- Failed schema validation for present evals
+- Failed eval structure checks for present evals (`skill-lab-validate` / `skill-lab-eval --validate-only`)
 - Safety boundary violation
 - Any modification of the target during evaluation
 

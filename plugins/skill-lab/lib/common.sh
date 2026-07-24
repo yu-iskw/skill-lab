@@ -16,9 +16,6 @@
 
 skill_lab_lib_dir="$(CDPATH='' cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 skill_lab_plugin_root="$(CDPATH='' cd -- "${skill_lab_lib_dir}/.." && pwd)"
-# Reserved for future schema-path helpers (bash+jq MVP validates shape directly).
-readonly skill_lab_schemas_dir="${skill_lab_plugin_root}/schemas"
-export skill_lab_schemas_dir
 
 skill_lab_die() {
 	echo "ERROR: $*" >&2
@@ -77,3 +74,6 @@ skill_lab_emit_finding() {
 	jq -nc --arg severity "${severity}" --arg code "${code}" --arg message "${message}" \
 		'{severity:$severity, code:$code, message:$message}'
 }
+
+# shellcheck source=./eval_suite.sh
+source "${skill_lab_lib_dir}/eval_suite.sh"

@@ -81,6 +81,41 @@ add_finding() {
 	fi
 }
 
+emit_report() {
+	local passed=true
+	if ((errors > 0)); then
+		passed=false
+	fi
+
+	if [[ ${json_output} == true ]]; then
+		local findings_json='[]'
+		if ((${#findings[@]} > 0)); then
+			findings_json="$(printf '%s\n' "${findings[@]}" | jq -s '.')"
+		fi
+		jq -nc \
+			--arg skill_dir "${skill_dir}" \
+			--arg skill_name "${dir_name}" \
+			--argjson passed "${passed}" \
+			--argjson error_count "${errors}" \
+			--argjson findings "${findings_json}" \
+			'{skill_dir:$skill_dir, skill_name:$skill_name, passed:$passed, error_count:$error_count, findings:$findings}'
+	else
+		echo "skill-lab-validate: ${dir_name}"
+		if ((${#findings[@]} == 0)); then
+			echo "OK: no findings"
+		else
+			printf '%s\n' "${findings[@]}" | jq -r '"\(.severity | ascii_upcase) \(.code): \(.message)"'
+		fi
+		if [[ ${passed} == true ]]; then
+			echo "RESULT: PASS"
+		else
+			echo "RESULT: FAIL (${errors} error(s))"
+		fi
+	fi
+
+	[[ ${passed} == true ]]
+}
+
 if [[ ! -f ${skill_md} ]]; then
 	add_finding error MISSING_SKILL_MD "SKILL.md is required"
 else
@@ -117,7 +152,6 @@ else
 	fi
 fi
 
-# Forbidden placeholder markers that indicate unfinished generation.
 if [[ -f ${skill_md} ]] && grep -Eq 'TODO|FIXME|TBD|<[A-Z_]+>' "${skill_md}"; then
 	add_finding warning FORBIDDEN_PLACEHOLDER "SKILL.md contains unfinished placeholder markers"
 fi
@@ -125,91 +159,19 @@ fi
 validate_eval_file() {
 	local path="$1"
 	local kind="$2"
-	skill_lab_json_ok "${path}"
-
-	local cases_expr='(if type=="array" then . else .cases end)'
-	if ! jq -e "${cases_expr} | type == \"array\"" "${path}" >/dev/null 2>&1; then
-		add_finding error EVAL_CASES_MISSING "${kind}: cases array is required"
-		return
-	fi
-
-	local dupes
-	dupes="$(jq -r "${cases_expr} | map(.id) | group_by(.) | map(select(length>1) | .[0]) | .[]?" "${path}")"
-	if [[ -n ${dupes} ]]; then
-		while IFS= read -r dup; do
-			[[ -z ${dup} ]] && continue
-			add_finding error EVAL_DUPLICATE_ID "${kind}: duplicate case id '${dup}'"
-		done <<<"${dupes}"
-	fi
-
-	local invalid_split
-	invalid_split="$(jq -r "${cases_expr}[] | select(.split != null and (.split | IN(\"train\",\"validation\",\"held-out\") | not)) | .id" "${path}")"
-	if [[ -n ${invalid_split} ]]; then
-		while IFS= read -r cid; do
-			[[ -z ${cid} ]] && continue
-			add_finding error EVAL_SPLIT_INVALID "${kind}: case '${cid}' has invalid split"
-		done <<<"${invalid_split}"
-	fi
-
-	if [[ ${kind} == trigger-evals ]]; then
-		local missing
-		missing="$(jq -r "${cases_expr}[] | select((.id|not) or (.prompt|not) or (.expected.should_trigger|type != \"boolean\")) | .id // \"<missing-id>\"" "${path}")"
-		if [[ -n ${missing} ]]; then
-			while IFS= read -r cid; do
-				[[ -z ${cid} ]] && continue
-				add_finding error TRIGGER_CASE_INVALID "trigger case '${cid}' requires id, prompt, expected.should_trigger"
-			done <<<"${missing}"
-		fi
-	fi
-
-	if [[ ${kind} == output-evals ]]; then
-		local missing
-		missing="$(jq -r "${cases_expr}[] | select((.id|not) or (.prompt|not) or (.assertions|type != \"array\") or ((.assertions|length) < 1)) | .id // \"<missing-id>\"" "${path}")"
-		if [[ -n ${missing} ]]; then
-			while IFS= read -r cid; do
-				[[ -z ${cid} ]] && continue
-				add_finding error OUTPUT_CASE_INVALID "output case '${cid}' requires id, prompt, and non-empty assertions"
-			done <<<"${missing}"
-		fi
-	fi
+	local findings_json
+	findings_json="$(skill_lab_eval_suite_findings "${path}" "${kind}" || true)"
+	while IFS= read -r row; do
+		[[ -z ${row} ]] && continue
+		add_finding error "$(jq -r '.code' <<<"${row}")" "$(jq -r '.message' <<<"${row}")"
+	done < <(jq -c '.[]' <<<"${findings_json}")
 }
 
 if [[ -f ${skill_dir}/evals/trigger-evals.json ]]; then
-	validate_eval_file "${skill_dir}/evals/trigger-evals.json" trigger-evals
+	validate_eval_file "${skill_dir}/evals/trigger-evals.json" trigger
 fi
 if [[ -f ${skill_dir}/evals/output-evals.json ]]; then
-	validate_eval_file "${skill_dir}/evals/output-evals.json" output-evals
+	validate_eval_file "${skill_dir}/evals/output-evals.json" output
 fi
 
-passed=true
-if ((errors > 0)); then
-	passed=false
-fi
-
-if [[ ${json_output} == true ]]; then
-	findings_json='[]'
-	if ((${#findings[@]} > 0)); then
-		findings_json="$(printf '%s\n' "${findings[@]}" | jq -s '.')"
-	fi
-	jq -nc \
-		--arg skill_dir "${skill_dir}" \
-		--arg skill_name "${dir_name}" \
-		--argjson passed "${passed}" \
-		--argjson error_count "${errors}" \
-		--argjson findings "${findings_json}" \
-		'{skill_dir:$skill_dir, skill_name:$skill_name, passed:$passed, error_count:$error_count, findings:$findings}'
-else
-	echo "skill-lab-validate: ${dir_name}"
-	if ((${#findings[@]} == 0)); then
-		echo "OK: no findings"
-	else
-		printf '%s\n' "${findings[@]}" | jq -r '"\(.severity | ascii_upcase) \(.code): \(.message)"'
-	fi
-	if [[ ${passed} == true ]]; then
-		echo "RESULT: PASS"
-	else
-		echo "RESULT: FAIL (${errors} error(s))"
-	fi
-fi
-
-[[ ${passed} == true ]]
+emit_report

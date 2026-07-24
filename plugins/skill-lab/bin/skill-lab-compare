@@ -51,14 +51,19 @@ case "$1" in
 -*)
 	skill_lab_die "unknown option: $1"
 	;;
-*)
-	:
-	;;
 esac
 
 input_path="$1"
 skill_lab_require_file "${input_path}"
 skill_lab_json_ok "${input_path}"
+
+if ! jq -e '
+	(if type=="array" then . else (.checkpoints // []) end) as $all
+	| ($all | length == 0)
+		or all($all[]; (.score | type) == "number" and (.hard_gates_passed | type) == "boolean")
+' "${input_path}" >/dev/null 2>&1; then
+	skill_lab_die "checkpoints require numeric score and boolean hard_gates_passed"
+fi
 
 result="$(
 	jq -c '
@@ -69,13 +74,7 @@ result="$(
 			else
 				(
 					$valid
-					| sort_by(
-							-(.score // 0),
-							(.file_count // 0),
-							(.created_at // ""),
-							(.id // "")
-						)
-					| .[0]
+					| min_by([-(.score), (.file_count // 0), (.created_at // ""), (.id // "")])
 				) as $best
 				| {selected: $best, reason: "best_valid_checkpoint", valid_count: ($valid|length), candidate_count: ($all|length)}
 			end

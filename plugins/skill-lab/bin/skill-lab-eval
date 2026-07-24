@@ -77,15 +77,13 @@ done
 	exit 2
 }
 
-cases_expr='(if type=="array" then . else .cases end)'
-
 validate_skill_evals() {
 	local dir="$1"
 	[[ -d ${dir} ]] || skill_lab_die "not a directory: ${dir}"
 	dir="$(CDPATH='' cd -- "${dir}" && pwd)"
 
 	local errors=0
-	local report='[]'
+	local checks=()
 
 	check_file() {
 		local path="$1"
@@ -93,39 +91,30 @@ validate_skill_evals() {
 		if [[ ! -f ${path} ]]; then
 			return 0
 		fi
-		if ! jq -e . "${path}" >/dev/null 2>&1; then
-			report="$(jq -nc --arg path "${path}" --arg kind "${kind}" --arg msg "invalid JSON" \
-				'{path:$path, kind:$kind, ok:false, message:$msg}' | jq -s --argjson acc "${report}" '$acc + .')"
-			errors=$((errors + 1))
-			return
-		fi
 
+		local findings_json
+		local parse_ok=0
+		findings_json="$(skill_lab_eval_suite_findings "${path}" "${kind}")" || parse_ok=$?
+		local finding_count
+		finding_count="$(jq 'length' <<<"${findings_json}")"
 		local ok=true
 		local msg="ok"
-		if ! jq -e "${cases_expr} | type == \"array\" and length >= 1" "${path}" >/dev/null 2>&1; then
+		if ((finding_count > 0)) || ((parse_ok != 0)); then
 			ok=false
-			msg="cases array required"
+			msg="$(jq -r '.[0].message // "eval suite invalid"' <<<"${findings_json}")"
 			errors=$((errors + 1))
-		elif [[ ${kind} == trigger ]]; then
-			if ! jq -e "${cases_expr} | all(has(\"id\") and has(\"prompt\") and (.expected.should_trigger|type==\"boolean\") and has(\"tags\") and has(\"split\") and has(\"rationale\"))" "${path}" >/dev/null 2>&1; then
-				ok=false
-				msg="trigger cases missing required fields"
-				errors=$((errors + 1))
-			fi
-		elif [[ ${kind} == output ]]; then
-			if ! jq -e "${cases_expr} | all(has(\"id\") and has(\"prompt\") and (.assertions|type==\"array\" and length>=1) and has(\"input_files\") and has(\"human_review_points\") and has(\"split\"))" "${path}" >/dev/null 2>&1; then
-				ok=false
-				msg="output cases missing required fields"
-				errors=$((errors + 1))
-			fi
 		fi
-
-		report="$(jq -nc --arg path "${path}" --arg kind "${kind}" --argjson ok "${ok}" --arg msg "${msg}" \
-			'{path:$path, kind:$kind, ok:$ok, message:$msg}' | jq -s --argjson acc "${report}" '$acc + .')"
+		checks+=("$(jq -nc --arg path "${path}" --arg kind "${kind}" --argjson ok "${ok}" --arg msg "${msg}" \
+			'{path:$path, kind:$kind, ok:$ok, message:$msg}')")
 	}
 
 	check_file "${dir}/evals/trigger-evals.json" trigger
 	check_file "${dir}/evals/output-evals.json" output
+
+	local report='[]'
+	if ((${#checks[@]} > 0)); then
+		report="$(printf '%s\n' "${checks[@]}" | jq -s '.')"
+	fi
 
 	jq -nc --arg skill_dir "${dir}" --argjson passed "$((errors == 0))" --argjson error_count "${errors}" --argjson checks "${report}" \
 		'{skill_dir:$skill_dir, passed:($passed == 1), error_count:$error_count, checks:$checks}'
@@ -138,14 +127,27 @@ aggregate_criteria() {
 	skill_lab_require_file "${path}"
 	skill_lab_json_ok "${path}"
 
+	if ! jq -e '
+		(if type=="array" then {criteria:.} else . end) as $in
+		| ($in.criteria // []) as $criteria
+		| ($criteria | length) > 0
+		and all($criteria[]; (.score | type) == "number")
+	' "${path}" >/dev/null 2>&1; then
+		skill_lab_die "aggregate requires a non-empty criteria array with numeric scores"
+	fi
+
 	local result
 	result="$(
 		jq -c '
 			(if type=="array" then {criteria:.} else . end) as $in
 			| ($in.criteria // []) as $criteria
 			| ($criteria | length) as $n
-			| (if $n == 0 then 0 else (($criteria | map(.score // 0) | add) / $n) end) as $avg
-			| (($criteria | map(select((.severity == "hard") and (.passed == false))) | length) == 0) as $hard_ok
+			| (($criteria | map(.score) | add) / $n) as $avg
+			| (
+					$criteria
+					| map(select((.severity | tostring | ascii_downcase) == "hard"))
+					| length == 0 or all(.passed == true)
+				) as $hard_ok
 			| {
 					run_id: ($in.run_id // "run-local"),
 					skill_name: ($in.skill_name // "unknown"),
@@ -153,7 +155,12 @@ aggregate_criteria() {
 					hard_gates_passed: $hard_ok,
 					criteria: $criteria,
 					best_checkpoint: ($in.best_checkpoint // null),
-					stop_reason: (if $hard_ok then ($in.stop_reason // "passed") else "hard_gate_failed" end),
+					stop_reason: (
+						if ($n == 0) then "no_criteria"
+						elif $hard_ok then ($in.stop_reason // "passed")
+						else "hard_gate_failed"
+						end
+					),
 					remaining_human_review_points: ($in.remaining_human_review_points // [])
 				}
 		' "${path}"

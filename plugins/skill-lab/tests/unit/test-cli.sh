@@ -43,7 +43,7 @@ assert_eq() {
 assert_ok() {
 	local label="$1"
 	shift
-	if "$@"; then
+	if "$@" >/dev/null; then
 		echo "PASS ${label}"
 		pass=$((pass + 1))
 	else
@@ -64,10 +64,10 @@ assert_fail() {
 	fi
 }
 
-assert_ok "validate normalize-config" "${validate}" --json "${fixtures}/normalize-config" >/dev/null
-assert_ok "validate technical-notes-to-article" "${validate}" --json "${fixtures}/technical-notes-to-article" >/dev/null
-assert_ok "validate propose-deploy-stop" "${validate}" --json "${fixtures}/propose-deploy-stop" >/dev/null
-assert_ok "eval validate-only normalize-config" "${eval_bin}" --validate-only "${fixtures}/normalize-config" >/dev/null
+assert_ok "validate normalize-config" "${validate}" --json "${fixtures}/normalize-config"
+assert_ok "validate technical-notes-to-article" "${validate}" --json "${fixtures}/technical-notes-to-article"
+assert_ok "validate propose-deploy-stop" "${validate}" --json "${fixtures}/propose-deploy-stop"
+assert_ok "eval validate-only normalize-config" "${eval_bin}" --validate-only "${fixtures}/normalize-config"
 
 # Invalid: name/dir mismatch
 mkdir -p "${tmpdir}/bad-skill"
@@ -81,7 +81,7 @@ description: Intentionally mismatched name for validator coverage.
 EOF
 assert_fail "validate rejects name mismatch" "${validate}" "${tmpdir}/bad-skill"
 
-# Aggregate: hard gate failure cannot pass
+# Aggregate: explicit hard gate failure cannot pass
 cat >"${tmpdir}/criteria.json" <<'EOF'
 {
   "run_id": "run-test",
@@ -95,6 +95,71 @@ EOF
 agg="$("${eval_bin}" --aggregate "${tmpdir}/criteria.json" || true)"
 hard="$(jq -r '.hard_gates_passed' <<<"${agg}")"
 assert_eq "hard gate blocks aggregate pass" "false" "${hard}"
+
+# Aggregate: omitted passed on hard criterion fails closed
+cat >"${tmpdir}/criteria-missing-passed.json" <<'EOF'
+{
+  "run_id": "run-test",
+  "skill_name": "demo",
+  "criteria": [
+    {"criterion_id": "H1", "score": 1.0, "expected": "pass", "observed": "pass", "evidence": ["e"], "severity": "hard"}
+  ]
+}
+EOF
+agg_missing="$("${eval_bin}" --aggregate "${tmpdir}/criteria-missing-passed.json" || true)"
+hard_missing="$(jq -r '.hard_gates_passed' <<<"${agg_missing}")"
+assert_eq "missing hard passed fails closed" "false" "${hard_missing}"
+
+# Aggregate: string passed is not boolean true
+cat >"${tmpdir}/criteria-string-passed.json" <<'EOF'
+{
+  "run_id": "run-test",
+  "skill_name": "demo",
+  "criteria": [
+    {"criterion_id": "H1", "score": 1.0, "passed": "false", "expected": "pass", "observed": "fail", "evidence": ["e"], "severity": "hard"}
+  ]
+}
+EOF
+agg_str="$("${eval_bin}" --aggregate "${tmpdir}/criteria-string-passed.json" || true)"
+hard_str="$(jq -r '.hard_gates_passed' <<<"${agg_str}")"
+assert_eq "string hard passed fails closed" "false" "${hard_str}"
+
+# Aggregate: empty criteria rejected
+cat >"${tmpdir}/criteria-empty.json" <<'EOF'
+{"run_id":"run-test","skill_name":"demo","criteria":[]}
+EOF
+assert_fail "aggregate rejects empty criteria" "${eval_bin}" --aggregate "${tmpdir}/criteria-empty.json"
+
+# Validate and eval agree on weak eval suite
+mkdir -p "${tmpdir}/weak-skill/evals"
+cat >"${tmpdir}/weak-skill/SKILL.md" <<'EOF'
+---
+name: weak-skill
+description: Fixture used to prove validate and eval share eval-suite rules.
+---
+
+# Weak
+EOF
+cat >"${tmpdir}/weak-skill/evals/trigger-evals.json" <<'EOF'
+{"cases":[]}
+EOF
+assert_fail "validate rejects empty trigger cases" "${validate}" --json "${tmpdir}/weak-skill"
+assert_fail "eval rejects empty trigger cases" "${eval_bin}" --validate-only "${tmpdir}/weak-skill"
+
+# Invalid JSON under --json still emits a report
+mkdir -p "${tmpdir}/bad-json/evals"
+cat >"${tmpdir}/bad-json/SKILL.md" <<'EOF'
+---
+name: bad-json
+description: Fixture for invalid eval JSON reporting under --json.
+---
+
+# Bad JSON
+EOF
+printf '{not-json' >"${tmpdir}/bad-json/evals/trigger-evals.json"
+bad_json_out="$("${validate}" --json "${tmpdir}/bad-json" || true)"
+bad_code="$(jq -r '.findings[] | select(.code=="EVAL_INVALID_JSON") | .code' <<<"${bad_json_out}")"
+assert_eq "validate --json reports invalid eval JSON" "EVAL_INVALID_JSON" "${bad_code}"
 
 # Compare selects best valid checkpoint
 cat >"${tmpdir}/checkpoints.json" <<'EOF'
