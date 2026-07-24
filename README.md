@@ -27,6 +27,7 @@ flowchart TD
     synthesize["Synthesize criteria from validation findings"]
     evaluator["Run output-evaluator"]
     aggregate["Run skill-lab-eval aggregate"]
+    mode{"Authoring run or manual evaluation?"}
     acceptable{"Meets acceptance criteria?"}
     repairAvailable{"Bounded update still available?"}
     update["Update the Agent Skill from evaluation findings"]
@@ -36,7 +37,7 @@ flowchart TD
     select["Select the best valid checkpoint"]
     evidence["Persist validation, scorecard, and comparison evidence"]
     report["Report the selected Skill, score, assumptions, and limitations"]
-    diagnosis["Report diagnosis without modifying the Skill"]
+    diagnosis["Persist evidence and report diagnosis without modifying the Skill"]
 
     request --> collect
     collect --> compile
@@ -55,11 +56,13 @@ flowchart TD
     valid -->|"Yes"| evaluator
     synthesize --> aggregate
     evaluator --> aggregate
-    aggregate --> acceptable
+    aggregate --> mode
 
+    mode -->|"Manual evaluation"| diagnosis
+    mode -->|"Authoring run"| acceptable
     acceptable -->|"Yes"| checkpoints
     acceptable -->|"No"| repairAvailable
-    repairAvailable -->|"Yes, create workflow"| update
+    repairAvailable -->|"Yes"| update
     update --> candidate1
     candidate1 --> evaluationInput
     repairAvailable -->|"No"| checkpoints
@@ -68,9 +71,6 @@ flowchart TD
     compare --> select
     select --> evidence
     evidence --> report
-
-    manual --> diagnosis
-    aggregate --> diagnosis
     stop --> report
 ```
 
