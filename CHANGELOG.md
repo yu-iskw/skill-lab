@@ -18,6 +18,8 @@
 - Shared output-eval validation covers nested assertion/input_files/human_review_points shapes
 - Severity vocabulary aligned on RFC `quality` (schemas + fixtures)
 - `skill-lab-validate` requires a closing YAML frontmatter `---` delimiter
+- Create/evaluate skills document exact CLI argv, hard-fail scorecard synthesis, and structure-only eval suites
+- Subagents aligned to CLI contracts: templates by complexity, aggregate handoff fields, `hard_gates_passed` plural, quality→complexity mapping
 
 ### Removed
 

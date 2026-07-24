@@ -33,11 +33,13 @@ claude --plugin-dir /path/to/skill-lab/plugins/skill-lab
 Requires `bash` and `jq`.
 
 ```bash
-./bin/skill-lab-validate path/to/skill
+./bin/skill-lab-validate --json path/to/skill
 ./bin/skill-lab-eval --validate-only path/to/skill
-./bin/skill-lab-eval --aggregate criteria.json
+./bin/skill-lab-eval --aggregate criteria.json --out scorecard.json
 ./bin/skill-lab-compare checkpoints.json
 ```
+
+MVP eval suites are structure-validated only (assertion types are not executed). Aggregate criteria use severity `hard|quality|info` and checkpoints use boolean `hard_gates_passed`.
 
 ## Layout
 

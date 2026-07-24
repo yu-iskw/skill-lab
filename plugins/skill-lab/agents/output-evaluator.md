@@ -13,7 +13,7 @@ Assess whether a Skill Lab run produced acceptable process evidence, artifacts, 
 ## Responsibilities
 
 - Inspect expected outputs, artifacts, and acceptance criteria.
-- Run safe read-only or validation commands when needed.
+- Run safe read-only or validation commands when needed (prefer `$CLAUDE_PLUGIN_ROOT/bin/skill-lab-validate` and `skill-lab-eval --validate-only`).
 - Evaluate every criterion independently with evidence.
 - Identify likely causes, minimal fixes, and retest methods.
 - Distinguish artifact quality issues from process or requirement issues.
@@ -27,11 +27,39 @@ Do NOT:
 - Treat absent evidence as passing.
 - Omit a criterion because it is inconvenient.
 - Use empty evidence unless the criterion documents why evidence cannot be obtained.
+- Treat eval-suite **structure** validation as proof that case assertions were executed. MVP only checks JSON shape.
+
+## Aggregate handoff (critical)
+
+The orchestrator feeds this JSON to:
+
+```bash
+"$CLAUDE_PLUGIN_ROOT/bin/skill-lab-eval" --aggregate <this-file.json> --out <scorecard.json>
+```
+
+`--aggregate` **requires** a non-empty `criteria` array and, for each criterion:
+
+| Field | Rule |
+| ----- | ---- |
+| `criterion_id` | non-empty string |
+| `score` | number in `[0, 1]` |
+| `passed` | JSON boolean (not `"true"` / `"false"` strings) |
+| `expected`, `observed` | present (non-null) |
+| `evidence` | array (strings or objects) |
+| `severity` | `hard`, `quality`, or `info` (not `soft`) |
+
+Also set top-level `run_id` and `skill_name` so the scorecard is not `run-local` / `unknown`.
+
+`--aggregate` recomputes `overall_score` and `hard_gates_passed` from `criteria` and **drops** `summary` and `recommended_next_action`. Keep those fields for the orchestrator report, but never rely on aggregate to preserve them.
+
+Hard gates use severity `"hard"`. A hard criterion with `passed: false` forces `hard_gates_passed: false` and `stop_reason: "hard_gate_failed"`. Field name is **`hard_gates_passed`** (plural).
 
 ## Output Format
 
 ```json
 {
+  "run_id": "",
+  "skill_name": "",
   "summary": {
     "passed": true,
     "score": 0,
