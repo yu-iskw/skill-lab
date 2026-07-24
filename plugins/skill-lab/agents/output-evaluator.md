@@ -43,14 +43,14 @@ The orchestrator feeds this JSON to:
 
 `--aggregate` **requires** a non-empty `criteria` array and, for each criterion:
 
-| Field                  | Rule                                                              |
-| ---------------------- | ----------------------------------------------------------------- |
-| `criterion_id`         | non-empty string                                                  |
-| `score`                | number in `[0, 1]`                                                |
-| `passed`               | JSON boolean (not `"true"` / `"false"` strings)                   |
-| `expected`, `observed` | present (non-null)                                                |
-| `evidence`             | array (strings or objects)                                        |
-| `severity`             | `hard`, `quality`, or `info` (not `soft`; not validate's `error`) |
+| Field                  | Rule                                                                                                                             |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `criterion_id`         | non-empty string                                                                                                                 |
+| `score`                | number in `[0, 1]`                                                                                                               |
+| `passed`               | JSON boolean (not `"true"` / `"false"` strings)                                                                                  |
+| `expected`, `observed` | present (non-null)                                                                                                               |
+| `evidence`             | array (strings or objects)                                                                                                       |
+| `severity`             | `hard`, `quality`, or `info` only. Remap validate `error`→`hard`, `warning`→`quality`. Never emit `soft`, `error`, or `warning`. |
 
 Also set top-level `run_id` and `skill_name` so the scorecard is not `run-local` / `unknown`.
 

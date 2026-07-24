@@ -53,6 +53,7 @@ Do NOT:
 - Frontmatter `name` matches directory (lowercase, digits, hyphens; 1-64 chars; no leading/trailing/consecutive hyphens).
 - `description` is 1-1024 characters and states what and when.
 - Supporting directories only when justified.
+- Do **not** leave unfinished markers in `SKILL.md`: `TODO`, `FIXME`, `TBD`, or `<PLACEHOLDER>`-style tokens. Validate emits `FORBIDDEN_PLACEHOLDER` warnings for these; if the orchestrator copies `severity: "warning"` into aggregate criteria, aggregation fails.
 
 ## Eval suites (optional)
 

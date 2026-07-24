@@ -26,7 +26,7 @@ Delegate to `skill-architect` with contract, complexity level, write root, and `
 "$CLAUDE_PLUGIN_ROOT/bin/skill-lab-validate" --json <skill-dir>
 ```
 
-Validation is a hard gate. Invalid checkpoints cannot be selected. Prefer `--json` and capture stdout even when exit code is `1`. On failure, synthesize criteria using create `SKILL.md` **Hard-fail scorecard synthesis** (map validate `error` → criterion `hard`; never pass `severity: "error"` to aggregate).
+Validation is a hard gate. Invalid checkpoints cannot be selected. Prefer `--json` and capture stdout even when exit code is `1`. On failure—or when folding findings into Level 1 criteria—use create `SKILL.md` **Finding severity map** (`error`→`hard`, `warning`→`quality`). Never pass validate's `error`/`warning` strings to aggregate.
 
 ## Phase 6 — Evaluate and scorecard
 

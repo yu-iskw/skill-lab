@@ -28,11 +28,22 @@ Create a new Agent Skill as a minimal, valid package. Orchestrate specialist age
 - **Level 2+ (package valid):** delegate to isolated `output-evaluator` for the criteria list.
 - **Any level (package invalid):** use synthesized findings criteria; do not call `output-evaluator`.
 
-`<criteria.json>` must include `run_id`, `skill_name`, and a **non-empty** `criteria` array. Use field name **`hard_gates_passed`** (plural) everywhere. Severity vocabulary is **`hard|quality|info`** (not `soft`, not validate's `error`).
+`<criteria.json>` must include `run_id`, `skill_name`, and a **non-empty** `criteria` array. Use field name **`hard_gates_passed`** (plural) everywhere. Severity vocabulary is **`hard|quality|info`** only.
+
+## Finding severity map
+
+`skill-lab-validate` findings use `error` / `warning`. `--aggregate` rejects those strings. Always remap before building criteria (including Level 1 “validator evidence” on **passing** packages that still emit warnings such as `FORBIDDEN_PLACEHOLDER`):
+
+| Validate finding `severity` | Criterion `severity` | Typical `passed` |
+| --------------------------- | -------------------- | ---------------- |
+| `error`                     | `hard`               | `false`          |
+| `warning`                   | `quality`            | `false`          |
+
+Never copy `"error"`, `"warning"`, or `"soft"` into criteria.
 
 ## Hard-fail scorecard synthesis
 
-When validate fails, map each finding to a criterion. Validator `severity: "error"` becomes criterion `severity: "hard"` (never copy `"error"` into criteria):
+When validate fails (`passed: false`), map **every** finding through the table above (not only errors). Example after remapping an `error` finding:
 
 ```json
 {

@@ -22,6 +22,7 @@
 - Subagents aligned to CLI contracts: templates by complexity, aggregate handoff fields, `hard_gates_passed` plural, quality→complexity mapping
 - Create hard-fail synthesis inlined (map validate `error` → criterion `hard`); checkpoint `overall_score` → `score` mapping documented
 - Architect rename checklist + full trigger/output eval required fields; evaluator uses `$CLAUDE_PLUGIN_ROOT/bin` paths only
+- Remap validate `warning` → criterion `quality` (passing packages can still emit `FORBIDDEN_PLACEHOLDER`); never feed `warning`/`error` to `--aggregate`
 
 ### Removed
 

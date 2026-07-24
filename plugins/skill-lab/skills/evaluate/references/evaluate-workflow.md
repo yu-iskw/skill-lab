@@ -26,7 +26,7 @@ This checks JSON shape only. It does not run assertion types such as `contains` 
 
 When package validation passed, delegate to `output-evaluator` with read-only inputs (`run_id`, `skill_name`, skill path). It must not modify files. Persist its full JSON under `evaluations/criteria.json`.
 
-When package validation failed, **skip** the evaluator and synthesize criteria from findings (see `evaluate/SKILL.md`). Never call `--aggregate` with `"criteria": []`.
+When package validation failed, **skip** the evaluator and synthesize criteria from findings (see `evaluate/SKILL.md` **Finding severity map**: `error`→`hard`, `warning`→`quality`). Never call `--aggregate` with `"criteria": []` or with validate severities left as `error`/`warning`.
 
 ## Aggregate and compare
 
