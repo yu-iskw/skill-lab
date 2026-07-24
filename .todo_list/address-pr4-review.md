@@ -9,7 +9,9 @@
 
 ## Phase 2 — Verify + ship
 
-- [ ] Expand unit tests for all four review cases
-- [ ] Run unit tests green
-- [ ] Commit, push, update PR
+- [x] Expand unit tests for all four review cases
+- [x] Run unit tests green (26/26)
+- [x] Commit, push, update PR
+- [x] Fix Trunk SC2310 on frontmatter closed check
+- [ ] CI green on latest push
 - [ ] Reply to / resolve review threads when possible
