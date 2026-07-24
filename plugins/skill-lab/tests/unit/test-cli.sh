@@ -96,7 +96,7 @@ agg="$("${eval_bin}" --aggregate "${tmpdir}/criteria.json" || true)"
 hard="$(jq -r '.hard_gates_passed' <<<"${agg}")"
 assert_eq "hard gate blocks aggregate pass" "false" "${hard}"
 
-# Aggregate: omitted passed on hard criterion fails closed
+# Aggregate: omitted passed is rejected (not aggregated fail-open)
 cat >"${tmpdir}/criteria-missing-passed.json" <<'EOF'
 {
   "run_id": "run-test",
@@ -106,11 +106,9 @@ cat >"${tmpdir}/criteria-missing-passed.json" <<'EOF'
   ]
 }
 EOF
-agg_missing="$("${eval_bin}" --aggregate "${tmpdir}/criteria-missing-passed.json" || true)"
-hard_missing="$(jq -r '.hard_gates_passed' <<<"${agg_missing}")"
-assert_eq "missing hard passed fails closed" "false" "${hard_missing}"
+assert_fail "aggregate rejects missing passed" "${eval_bin}" --aggregate "${tmpdir}/criteria-missing-passed.json"
 
-# Aggregate: string passed is not boolean true
+# Aggregate: string passed is not a boolean
 cat >"${tmpdir}/criteria-string-passed.json" <<'EOF'
 {
   "run_id": "run-test",
@@ -120,15 +118,37 @@ cat >"${tmpdir}/criteria-string-passed.json" <<'EOF'
   ]
 }
 EOF
-agg_str="$("${eval_bin}" --aggregate "${tmpdir}/criteria-string-passed.json" || true)"
-hard_str="$(jq -r '.hard_gates_passed' <<<"${agg_str}")"
-assert_eq "string hard passed fails closed" "false" "${hard_str}"
+assert_fail "aggregate rejects string passed" "${eval_bin}" --aggregate "${tmpdir}/criteria-string-passed.json"
 
 # Aggregate: empty criteria rejected
 cat >"${tmpdir}/criteria-empty.json" <<'EOF'
 {"run_id":"run-test","skill_name":"demo","criteria":[]}
 EOF
 assert_fail "aggregate rejects empty criteria" "${eval_bin}" --aggregate "${tmpdir}/criteria-empty.json"
+
+# Aggregate: score outside [0,1] rejected
+cat >"${tmpdir}/criteria-bad-score.json" <<'EOF'
+{
+  "run_id": "run-test",
+  "skill_name": "demo",
+  "criteria": [
+    {"criterion_id": "H1", "score": 2.0, "passed": false, "expected": "ok", "observed": "bad", "evidence": [], "severity": "hard"}
+  ]
+}
+EOF
+assert_fail "aggregate rejects score outside [0,1]" "${eval_bin}" --aggregate "${tmpdir}/criteria-bad-score.json"
+
+# Aggregate: missing severity rejected
+cat >"${tmpdir}/criteria-missing-severity.json" <<'EOF'
+{
+  "run_id": "run-test",
+  "skill_name": "demo",
+  "criteria": [
+    {"criterion_id": "H1", "score": 1.0, "passed": true, "expected": "ok", "observed": "ok", "evidence": []}
+  ]
+}
+EOF
+assert_fail "aggregate rejects missing severity" "${eval_bin}" --aggregate "${tmpdir}/criteria-missing-severity.json"
 
 # Validate and eval agree on weak eval suite
 mkdir -p "${tmpdir}/weak-skill/evals"
@@ -170,6 +190,78 @@ cat >"${tmpdir}/weak-skill/evals/trigger-evals.json" <<'EOF'
 EOF
 assert_fail "validate rejects non-object trigger case" "${validate}" --json "${tmpdir}/weak-skill"
 assert_fail "eval rejects non-object trigger case" "${eval_bin}" --validate-only "${tmpdir}/weak-skill"
+
+# Nested output-eval fields must be validated
+mkdir -p "${tmpdir}/output-skill/evals"
+cat >"${tmpdir}/output-skill/SKILL.md" <<'EOF'
+---
+name: output-skill
+description: Fixture used to prove nested output-eval field validation.
+---
+
+# Output Skill
+EOF
+cat >"${tmpdir}/output-skill/evals/output-evals.json" <<'EOF'
+{
+  "cases": [
+    {
+      "id": "c1",
+      "prompt": "p",
+      "input_files": [],
+      "assertions": [{}],
+      "human_review_points": [],
+      "split": "train"
+    }
+  ]
+}
+EOF
+assert_fail "validate rejects empty assertion objects" "${validate}" --json "${tmpdir}/output-skill"
+assert_fail "eval rejects empty assertion objects" "${eval_bin}" --validate-only "${tmpdir}/output-skill"
+
+cat >"${tmpdir}/output-skill/evals/output-evals.json" <<'EOF'
+{
+  "cases": [
+    {
+      "id": "c1",
+      "prompt": "p",
+      "input_files": [42],
+      "assertions": [{"id": "a1", "type": "contains", "severity": "hard"}],
+      "human_review_points": [],
+      "split": "train"
+    }
+  ]
+}
+EOF
+assert_fail "validate rejects non-string/non-object input_files" "${validate}" --json "${tmpdir}/output-skill"
+assert_fail "eval rejects non-string/non-object input_files" "${eval_bin}" --validate-only "${tmpdir}/output-skill"
+
+cat >"${tmpdir}/output-skill/evals/output-evals.json" <<'EOF'
+{
+  "cases": [
+    {
+      "id": "c1",
+      "prompt": "p",
+      "input_files": [],
+      "assertions": [{"id": "a1", "type": "contains", "severity": "hard"}],
+      "human_review_points": [42],
+      "split": "train"
+    }
+  ]
+}
+EOF
+assert_fail "validate rejects non-string human_review_points" "${validate}" --json "${tmpdir}/output-skill"
+assert_fail "eval rejects non-string human_review_points" "${eval_bin}" --validate-only "${tmpdir}/output-skill"
+
+# Unclosed frontmatter must fail
+mkdir -p "${tmpdir}/unclosed-skill"
+cat >"${tmpdir}/unclosed-skill/SKILL.md" <<'EOF'
+---
+name: unclosed-skill
+description: Fixture missing the closing frontmatter delimiter on purpose.
+
+# Unclosed
+EOF
+assert_fail "validate rejects unclosed frontmatter" "${validate}" --json "${tmpdir}/unclosed-skill"
 
 # Invalid JSON under --json still emits a report
 mkdir -p "${tmpdir}/bad-json/evals"

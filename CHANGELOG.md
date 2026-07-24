@@ -12,6 +12,13 @@
 - Templates: minimal, standard, rigorous
 - Fixture Skills: `normalize-config`, `technical-notes-to-article`, `propose-deploy-stop`
 
+### Fixed
+
+- `skill-lab-eval --aggregate` rejects malformed criteria before scoring (score range, boolean `passed`, severity `hard|quality|info`, required fields)
+- Shared output-eval validation covers nested assertion/input_files/human_review_points shapes
+- Severity vocabulary aligned on RFC `quality` (schemas + fixtures)
+- `skill-lab-validate` requires a closing YAML frontmatter `---` delimiter
+
 ### Removed
 
 - Sample `hello-world` plugin from the former template repository

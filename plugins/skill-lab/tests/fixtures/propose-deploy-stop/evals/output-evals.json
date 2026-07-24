@@ -27,7 +27,7 @@
         {
           "id": "includes-rollback-plan",
           "type": "contains",
-          "severity": "soft",
+          "severity": "quality",
           "expected": "Rollback"
         }
       ],

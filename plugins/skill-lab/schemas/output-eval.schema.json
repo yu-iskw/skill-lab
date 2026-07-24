@@ -111,7 +111,7 @@
         },
         "severity": {
           "type": "string",
-          "enum": ["hard", "soft", "info"]
+          "enum": ["hard", "quality", "info"]
         },
         "expected": {},
         "observed": {},

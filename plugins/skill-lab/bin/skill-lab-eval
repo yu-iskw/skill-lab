@@ -131,9 +131,17 @@ aggregate_criteria() {
 		(if type=="array" then {criteria:.} else . end) as $in
 		| ($in.criteria // []) as $criteria
 		| ($criteria | length) > 0
-		and all($criteria[]; (.score | type) == "number")
+		and all($criteria[];
+			(.criterion_id | type == "string" and length > 0)
+			and (.score | type == "number" and . >= 0 and . <= 1)
+			and (.passed | type == "boolean")
+			and ((.severity | type == "string") and ((.severity | ascii_downcase) | IN("hard","quality","info")))
+			and (.expected != null)
+			and (.observed != null)
+			and (.evidence | type == "array")
+		)
 	' "${path}" >/dev/null 2>&1; then
-		skill_lab_die "aggregate requires a non-empty criteria array with numeric scores"
+		skill_lab_die "aggregate requires non-empty criteria with criterion_id, score in [0,1], boolean passed, severity hard|quality|info, expected, observed, and evidence[]"
 	fi
 
 	local result
@@ -145,7 +153,7 @@ aggregate_criteria() {
 			| (($criteria | map(.score) | add) / $n) as $avg
 			| (
 					$criteria
-					| map(select((.severity | tostring | ascii_downcase) == "hard"))
+					| map(select((.severity | ascii_downcase) == "hard"))
 					| length == 0 or all(.passed == true)
 				) as $hard_ok
 			| {
@@ -156,8 +164,7 @@ aggregate_criteria() {
 					criteria: $criteria,
 					best_checkpoint: ($in.best_checkpoint // null),
 					stop_reason: (
-						if ($n == 0) then "no_criteria"
-						elif $hard_ok then ($in.stop_reason // "passed")
+						if $hard_ok then ($in.stop_reason // "passed")
 						else "hard_gate_failed"
 						end
 					),

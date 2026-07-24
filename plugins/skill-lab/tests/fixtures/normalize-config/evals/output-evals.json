@@ -21,7 +21,7 @@
         {
           "id": "no-comments-in-output",
           "type": "not_contains",
-          "severity": "soft",
+          "severity": "quality",
           "expected": "#"
         }
       ],

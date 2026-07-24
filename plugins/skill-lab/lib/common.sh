@@ -61,6 +61,16 @@ skill_lab_frontmatter_field() {
 	' "${skill_md}"
 }
 
+# True when SKILL.md opens with --- and has a closing --- delimiter.
+skill_lab_frontmatter_is_closed() {
+	local skill_md="$1"
+	awk '
+		NR==1 && $0 == "---" { open=1; next }
+		open && $0 == "---" { closed=1; exit }
+		END { exit(closed ? 0 : 1) }
+	' "${skill_md}"
+}
+
 skill_lab_is_valid_skill_name() {
 	local name="$1"
 	[[ ${#name} -ge 1 && ${#name} -le 64 ]] || return 1

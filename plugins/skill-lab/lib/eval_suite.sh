@@ -84,8 +84,36 @@ skill_lab_eval_suite_findings() {
 										or (.input_files | type != "array")
 										or (.human_review_points | type != "array")
 										or (.split | type != "string")
+										or (
+											.assertions
+											| map(select(
+													(.id | type != "string" or length < 1)
+													or (.type | type != "string" or length < 1)
+													or ((.severity | type != "string") or ((.severity | ascii_downcase) | IN("hard","quality","info") | not))
+												))
+											| length > 0
+										)
+										or (
+											.input_files
+											| map(select(
+													(
+														(type == "string" and length > 0)
+														or (
+															type == "object"
+															and ((.path | type) == "string")
+															and ((.path | length) > 0)
+														)
+													) | not
+												))
+											| length > 0
+										)
+										or (
+											.human_review_points
+											| map(select(type != "string" or length < 1))
+											| length > 0
+										)
 									))
-								| map({code:"OUTPUT_CASE_INVALID", message:"\($kind): case \(case_id) requires id, prompt, assertions, input_files, human_review_points, split"})
+								| map({code:"OUTPUT_CASE_INVALID", message:"\($kind): case \(case_id) requires id, prompt, split, typed input_files, string human_review_points, and assertions with id/type/severity"})
 							else
 								[]
 							end
