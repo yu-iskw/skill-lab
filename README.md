@@ -4,6 +4,63 @@ Claude Code plugin for designing, evaluating, diagnosing, and improving Agent Sk
 
 Skill Lab is a thin workflow-orchestration plugin: reusable domain core as portable Agent Skills, independent reasoning via Claude Code subagents, and objective checks via deterministic scripts (`bash` + `jq`).
 
+## End-to-end workflow
+
+The plugin exposes two entry points. `/skill-lab:create` generates and may repair a Skill, while `/skill-lab:evaluate` inspects an existing Skill without modifying it. Both converge on deterministic validation, evidence-backed scoring, and best-valid-checkpoint selection.
+
+```mermaid
+flowchart TD
+    U[User request] --> R{Workflow}
+
+    R -->|Create a Skill| C0["/skill-lab:create"]
+    R -->|Evaluate an existing Skill| E0["/skill-lab:evaluate"]
+
+    subgraph CREATE[Create workflow]
+        C0 --> IC[Intent compiler subagent]
+        IC --> CT[Structured intent contract and assumptions]
+        CT --> CR{Complexity and safety routing}
+        CR -->|Unsafe executable action| STOP[Documentation-only plan or stop]
+        CR -->|Level 1, 2, or 3| SA[Skill architect subagent]
+        SA --> PKG[Minimal portable Skill package]
+    end
+
+    subgraph EVALUATE[Evaluation workflow]
+        E0 --> TARGET[Resolve existing Skill package]
+    end
+
+    PKG --> V[Deterministic package validation]
+    TARGET --> V
+    V --> HG{Hard gates pass?}
+
+    HG -->|No| SYN[Synthesize criteria from validator findings]
+    HG -->|Yes| ES{Create complexity level}
+    ES -->|Level 1| L1[Lightweight evidence review]
+    ES -->|Level 2 or 3| OE[Isolated output-evaluator subagent]
+    ES -->|Existing Skill| OE
+
+    SYN --> AGG[Aggregate criteria into scorecard]
+    L1 --> AGG
+    OE --> AGG
+
+    AGG --> MODE{Create workflow?}
+    MODE -->|Yes, repair needed and unused| REP[One bounded repair]
+    REP --> V
+    MODE -->|No repair or evaluate-only| CP[Build checkpoint metadata]
+
+    CP --> CMP[Select best valid checkpoint]
+    CMP --> EV[Persist run evidence under .skill-lab/runs]
+    EV --> REPORT[Report score, assumptions, limitations, and best checkpoint]
+
+    STOP --> REPORT
+
+    classDef agent stroke-width:2px;
+    classDef deterministic stroke-dasharray:5 3;
+    class IC,SA,OE agent;
+    class V,AGG,CMP deterministic;
+```
+
+Solid bordered nodes represent LLM-driven skills or subagents; dashed borders represent deterministic CLI checks. A failed hard gate cannot be offset by a high average score, and the evaluate workflow never modifies the target Skill.
+
 ## Repository layout
 
 ```text
