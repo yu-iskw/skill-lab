@@ -81,6 +81,30 @@ description: Intentionally mismatched name for validator coverage.
 EOF
 assert_fail "validate rejects name mismatch" "${validate}" "${tmpdir}/bad-skill"
 
+# Inline YAML comments on unquoted scalars must not poison name/description
+mkdir -p "${tmpdir}/comment-skill"
+cat >"${tmpdir}/comment-skill/SKILL.md" <<'EOF'
+---
+name: comment-skill # package name
+description: Skill with inline YAML comments in frontmatter scalars. # trailing note
+---
+
+# Comment Skill
+EOF
+assert_ok "validate accepts inline YAML comments on scalars" "${validate}" --json "${tmpdir}/comment-skill"
+
+# Quoted scalars keep hash characters
+mkdir -p "${tmpdir}/hash-desc"
+cat >"${tmpdir}/hash-desc/SKILL.md" <<'EOF'
+---
+name: hash-desc
+description: "Use when the user mentions #hashtags in prompts."
+---
+
+# Hash Desc
+EOF
+assert_ok "validate keeps hash inside quoted description" "${validate}" --json "${tmpdir}/hash-desc"
+
 # Aggregate: explicit hard gate failure cannot pass
 cat >"${tmpdir}/criteria.json" <<'EOF'
 {
@@ -149,6 +173,18 @@ cat >"${tmpdir}/criteria-missing-severity.json" <<'EOF'
 }
 EOF
 assert_fail "aggregate rejects missing severity" "${eval_bin}" --aggregate "${tmpdir}/criteria-missing-severity.json"
+
+# Aggregate: evidence elements must be strings or objects
+cat >"${tmpdir}/criteria-bad-evidence.json" <<'EOF'
+{
+  "run_id": "run-test",
+  "skill_name": "demo",
+  "criteria": [
+    {"criterion_id": "H1", "score": 1.0, "passed": true, "expected": "ok", "observed": "ok", "evidence": [42], "severity": "hard"}
+  ]
+}
+EOF
+assert_fail "aggregate rejects non-string/non-object evidence" "${eval_bin}" --aggregate "${tmpdir}/criteria-bad-evidence.json"
 
 # Validate and eval agree on weak eval suite
 mkdir -p "${tmpdir}/weak-skill/evals"

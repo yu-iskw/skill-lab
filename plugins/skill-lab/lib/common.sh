@@ -86,6 +86,7 @@ skill_lab_criteria_from_validate_report() {
 
 # Extract YAML-like frontmatter fields from SKILL.md without a YAML parser.
 # Supports simple `key: value` and `key: "value"` / `key: 'value'` lines.
+# Unquoted scalars strip trailing YAML comments (` # ...`); quoted values keep `#`.
 skill_lab_frontmatter_field() {
 	local skill_md="$1"
 	local field="$2"
@@ -100,6 +101,12 @@ skill_lab_frontmatter_field() {
 				gsub(/^[[:space:]]+|[[:space:]]+$/, "", value)
 				if ((value ~ /^".*"$/) || (value ~ /^'\''.*'\''$/)) {
 					value = substr(value, 2, length(value) - 2)
+				} else {
+					# YAML: unquoted `#` starts a comment when preceded by whitespace.
+					if (match(value, /[[:space:]]+#/)) {
+						value = substr(value, 1, RSTART - 1)
+						gsub(/[[:space:]]+$/, "", value)
+					}
 				}
 				print value
 				exit

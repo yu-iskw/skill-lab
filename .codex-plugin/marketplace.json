@@ -1,22 +1,10 @@
 {
   "name": "skill-lab",
   "metadata": {
-    "description": "Skill Lab marketplace entry (Codex adapter deferred; shared portable skills only in MVP)"
+    "description": "Codex marketplace reserved; Skill Lab Codex adapter deferred. Install via Claude marketplace until .codex-plugin/plugin.json exists."
   },
   "owner": {
     "name": "yu-iskw"
   },
-  "plugins": [
-    {
-      "name": "skill-lab",
-      "description": "Design, evaluate, and improve Agent Skills with evidence-backed workflows",
-      "source": "./plugins/skill-lab",
-      "version": "0.1.0",
-      "author": {
-        "name": "yu-iskw"
-      },
-      "license": "Apache-2.0",
-      "repository": "https://github.com/yu-iskw/skill-lab"
-    }
-  ]
+  "plugins": []
 }

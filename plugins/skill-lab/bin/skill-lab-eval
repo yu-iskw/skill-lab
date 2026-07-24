@@ -139,9 +139,10 @@ aggregate_criteria() {
 			and (.expected != null)
 			and (.observed != null)
 			and (.evidence | type == "array")
+			and all(.evidence[]; (type == "string") or (type == "object"))
 		)
 	' "${path}" >/dev/null 2>&1; then
-		skill_lab_die "aggregate requires non-empty criteria with criterion_id, score in [0,1], boolean passed, severity hard|quality|info, expected, observed, and evidence[]"
+		skill_lab_die "aggregate requires non-empty criteria with criterion_id, score in [0,1], boolean passed, severity hard|quality|info, expected, observed, and evidence[] of strings or objects"
 	fi
 
 	local result

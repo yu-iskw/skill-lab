@@ -12,13 +12,17 @@ Skill Lab is a thin workflow-orchestration plugin: reusable domain core as porta
 │   └── skill-lab/           # Product plugin
 ├── integration_tests/       # Shared plugin smoke tests
 ├── docs/                    # RFC and architecture notes
-├── .claude-plugin/          # Marketplace registry
+├── .claude-plugin/          # Claude marketplace (active)
+├── .cursor-plugin/          # Cursor marketplace (empty until adapter)
+├── .codex-plugin/           # Codex marketplace (empty until adapter)
 └── Makefile
 ```
 
+MVP installs via the **Claude** marketplace only. Cursor/Codex marketplace manifests are reserved with empty `plugins` until platform adapters ship.
+
 ## Quickstart
 
-1. Install from this marketplace (or load with `--plugin-dir plugins/skill-lab`).
+1. Install from the Claude marketplace (or load with `--plugin-dir plugins/skill-lab`).
 2. Run `/skill-lab:create` with a short skill request, or `/skill-lab:evaluate path/to/skill`.
 3. Local checks:
 
