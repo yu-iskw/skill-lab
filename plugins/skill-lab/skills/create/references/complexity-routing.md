@@ -2,19 +2,19 @@
 
 Use the lowest level that safely covers the request. If unsure, route higher.
 
-| Level | Signals                                             | Required handling                                  | Template   |
-| ----- | --------------------------------------------------- | -------------------------------------------------- | ---------- |
-| 1     | Single SKILL.md, clear trigger, no external effects | Intent, architect, validator, lightweight evaluation | `minimal`  |
-| 2     | Multi-step workflow, scripts, ambiguous criteria    | Plus isolated `output-evaluator`, eval aggregation | `standard` |
-| 3     | Credentials, billing, deletion, deployment, blast radius | Stop at unsafe boundary; require human direction | `rigorous` |
+| Level | Signals                                                  | Required handling                                    | Template   |
+| ----- | -------------------------------------------------------- | ---------------------------------------------------- | ---------- |
+| 1     | Single SKILL.md, clear trigger, no external effects      | Intent, architect, validator, lightweight evaluation | `minimal`  |
+| 2     | Multi-step workflow, scripts, ambiguous criteria         | Plus isolated `output-evaluator`, eval aggregation   | `standard` |
+| 3     | Credentials, billing, deletion, deployment, blast radius | Stop at unsafe boundary; require human direction     | `rigorous` |
 
 ## Intent `quality_level` mapping
 
-| Intent `quality_level` | Default level | Override |
-| ---------------------- | ------------- | -------- |
-| `prototype` | 1 | Raise if scripts/evals/ambiguity appear |
-| `mvp` | 2 | Raise to 3 on unsafe actions |
-| `production` | 2 | Raise to 3 on unsafe actions |
+| Intent `quality_level` | Default level | Override                                |
+| ---------------------- | ------------- | --------------------------------------- |
+| `prototype`            | 1             | Raise if scripts/evals/ambiguity appear |
+| `mvp`                  | 2             | Raise to 3 on unsafe actions            |
+| `production`           | 2             | Raise to 3 on unsafe actions            |
 
 Intent-compiler may emit `suggested_complexity_level` and `suggested_template`; still apply the Level 3 safety rule.
 

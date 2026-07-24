@@ -85,7 +85,9 @@ When validate fails and subjective eval is skipped, build criteria from findings
       "severity": "hard"
     }
   ],
-  "remaining_human_review_points": ["Fix package hard gates before subjective evaluation"]
+  "remaining_human_review_points": [
+    "Fix package hard gates before subjective evaluation"
+  ]
 }
 ```
 

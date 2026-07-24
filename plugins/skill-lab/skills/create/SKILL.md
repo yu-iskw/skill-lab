@@ -28,10 +28,10 @@ If package hard gates fail, skip subjective evaluation, synthesize criteria from
 "$CLAUDE_PLUGIN_ROOT/bin/skill-lab-eval" --validate-only <skill-dir>
 ```
 
-   - **Level 1 (package valid):** build a short non-empty criteria list from validator evidence plus lightweight review of description, triggers/non-triggers, and hard gates in `SKILL.md`. Optional: ask `output-evaluator` for that criteria list.
-   - **Level 2+ (package valid):** delegate to isolated `output-evaluator` for the criteria list.
-   - **Any level (package invalid):** use synthesized findings criteria; do not call `output-evaluator`.
-   - **All levels — aggregate:**
+- **Level 1 (package valid):** build a short non-empty criteria list from validator evidence plus lightweight review of description, triggers/non-triggers, and hard gates in `SKILL.md`. Optional: ask `output-evaluator` for that criteria list.
+- **Level 2+ (package valid):** delegate to isolated `output-evaluator` for the criteria list.
+- **Any level (package invalid):** use synthesized findings criteria; do not call `output-evaluator`.
+- **All levels — aggregate:**
 
 ```bash
 "$CLAUDE_PLUGIN_ROOT/bin/skill-lab-eval" --aggregate <criteria.json> --out <scorecard.json>

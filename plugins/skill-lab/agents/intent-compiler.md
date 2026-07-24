@@ -37,11 +37,11 @@ Raw user request, notes, existing Skill files for context, audience, workflows, 
 
 ## Quality level → complexity
 
-| `quality_level` | Typical create complexity | Notes |
-| --------------- | ------------------------- | ----- |
-| `prototype` | Level 1 | Single `SKILL.md`, clear trigger, no external effects |
-| `mvp` | Level 2 | Multi-step, scripts, or ambiguous acceptance criteria |
-| `production` | Level 2 or 3 | Use Level 3 when credentials/billing/delete/deploy/permissions appear |
+| `quality_level` | Typical create complexity | Notes                                                                 |
+| --------------- | ------------------------- | --------------------------------------------------------------------- |
+| `prototype`     | Level 1                   | Single `SKILL.md`, clear trigger, no external effects                 |
+| `mvp`           | Level 2                   | Multi-step, scripts, or ambiguous acceptance criteria                 |
+| `production`    | Level 2 or 3              | Use Level 3 when credentials/billing/delete/deploy/permissions appear |
 
 Any credential, billing, delete, deploy, or permission-changing action forces Level 3 handling by the create skill (stop / human direction), even if the user asked for a "simple" Skill.
 
