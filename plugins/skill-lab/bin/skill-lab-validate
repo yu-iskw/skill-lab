@@ -121,34 +121,39 @@ if [[ ! -f ${skill_md} ]]; then
 else
 	if ! head -n 1 "${skill_md}" | grep -qx -- '---'; then
 		add_finding error FRONTMATTER_MISSING "SKILL.md must start with YAML frontmatter"
-	elif ! skill_lab_frontmatter_is_closed "${skill_md}"; then
-		add_finding error FRONTMATTER_UNCLOSED "SKILL.md frontmatter must end with a closing --- delimiter"
 	else
-		# shellcheck disable=SC2311 # frontmatter helpers return empty string on miss
-		name="$(skill_lab_frontmatter_field "${skill_md}" name)"
-		# shellcheck disable=SC2311
-		description="$(skill_lab_frontmatter_field "${skill_md}" description)"
-
-		if [[ -z ${name} ]]; then
-			add_finding error NAME_MISSING "frontmatter field 'name' is required"
+		frontmatter_closed_ok=0
+		# shellcheck disable=SC2310 # predicate intentionally captured without exiting
+		skill_lab_frontmatter_is_closed "${skill_md}" || frontmatter_closed_ok=$?
+		if [[ ${frontmatter_closed_ok} -ne 0 ]]; then
+			add_finding error FRONTMATTER_UNCLOSED "SKILL.md frontmatter must end with a closing --- delimiter"
 		else
-			name_ok=0
-			# shellcheck disable=SC2310 # predicate intentionally captured without exiting
-			skill_lab_is_valid_skill_name "${name}" || name_ok=$?
-			if [[ ${name_ok} -ne 0 ]]; then
-				add_finding error NAME_INVALID "name must be 1-64 chars, lowercase alphanumeric with single hyphens: '${name}'"
-			fi
-			if [[ ${name} != "${dir_name}" ]]; then
-				add_finding error NAME_DIR_MISMATCH "name '${name}' must match directory '${dir_name}'"
-			fi
-		fi
+			# shellcheck disable=SC2311 # frontmatter helpers return empty string on miss
+			name="$(skill_lab_frontmatter_field "${skill_md}" name)"
+			# shellcheck disable=SC2311
+			description="$(skill_lab_frontmatter_field "${skill_md}" description)"
 
-		if [[ -z ${description} ]]; then
-			add_finding error DESCRIPTION_MISSING "frontmatter field 'description' is required"
-		else
-			desc_len=${#description}
-			if ((desc_len < 1 || desc_len > 1024)); then
-				add_finding error DESCRIPTION_LENGTH "description length must be 1-1024 (got ${desc_len})"
+			if [[ -z ${name} ]]; then
+				add_finding error NAME_MISSING "frontmatter field 'name' is required"
+			else
+				name_ok=0
+				# shellcheck disable=SC2310 # predicate intentionally captured without exiting
+				skill_lab_is_valid_skill_name "${name}" || name_ok=$?
+				if [[ ${name_ok} -ne 0 ]]; then
+					add_finding error NAME_INVALID "name must be 1-64 chars, lowercase alphanumeric with single hyphens: '${name}'"
+				fi
+				if [[ ${name} != "${dir_name}" ]]; then
+					add_finding error NAME_DIR_MISMATCH "name '${name}' must match directory '${dir_name}'"
+				fi
+			fi
+
+			if [[ -z ${description} ]]; then
+				add_finding error DESCRIPTION_MISSING "frontmatter field 'description' is required"
+			else
+				desc_len=${#description}
+				if ((desc_len < 1 || desc_len > 1024)); then
+					add_finding error DESCRIPTION_LENGTH "description length must be 1-1024 (got ${desc_len})"
+				fi
 			fi
 		fi
 	fi
