@@ -2,27 +2,27 @@
 
 ## Phase 0 — Foundation
 - [x] Create branch `cursor/skill-lab-mvp-0eac`
-- [ ] Scaffold `plugins/skill-lab` layout + manifests
-- [ ] Add JSON schemas (trigger/output/result/manifest/state)
-- [ ] Empty `hooks/hooks.json` for structure CI
+- [x] Scaffold `plugins/skill-lab` layout + manifests
+- [x] Add JSON schemas (trigger/output/result/manifest/state)
+- [x] Empty `hooks/hooks.json` for structure CI
 
 ## Phase 1 — Reasoning + Interaction
-- [ ] Agents: intent-compiler, skill-architect, output-evaluator
-- [ ] Skills: create (+ refs), evaluate (+ refs)
+- [x] Agents: intent-compiler, skill-architect, output-evaluator
+- [x] Skills: create (+ refs), evaluate (+ refs)
 
 ## Phase 2 — Verification plane (bash + jq)
-- [ ] `bin/skill-lab-validate` package validator
-- [ ] `bin/skill-lab-eval` schema + score aggregation
-- [ ] `bin/skill-lab-compare` best-valid-checkpoint selection
-- [ ] Shared `lib/` helpers
-- [ ] Unit tests for validators
+- [x] `bin/skill-lab-validate` package validator
+- [x] `bin/skill-lab-eval` schema + score aggregation
+- [x] `bin/skill-lab-compare` best-valid-checkpoint selection
+- [x] Shared `lib/` helpers
+- [x] Unit tests for validators
 
 ## Phase 3 — Fixtures + docs
-- [ ] Three fixture Skills
-- [ ] Templates minimal/standard/rigorous
-- [ ] docs/RFC.md, CHANGELOG, plugin README, root README
-- [ ] Remove hello-world; retarget marketplaces
+- [x] Three fixture Skills
+- [x] Templates minimal/standard/rigorous
+- [x] docs/RFC.md, CHANGELOG, plugin README, root README
+- [x] Remove hello-world; retarget marketplaces
 
 ## Phase 4 — Verify + ship
-- [ ] Integration tests (`--manifest-only` / full)
+- [x] Integration tests (`--manifest-only` / full)
 - [ ] Commit, push, draft PR
