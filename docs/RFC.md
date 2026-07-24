@@ -138,7 +138,7 @@ flowchart TB
 | `intent-compiler` | Reasoning | Emit `skill-state` (`schema_version` `1.0.0`); set `complexity_level` ∈ {1,2,3} and `artifact_budget`; list assumptions & irreversible actions | Invent unjustified artifacts |
 | `skill-architect` | Reasoning | Write minimal portable package under target path; produce checkpoints | Embed `.claude-plugin/` in generated Skills; self-grade as pass |
 | `output-evaluator` | Reasoning | Score criteria with evidence; record judge model id; read-only toward Skills | Write/Edit Skill files or expected eval outputs; **execute Skill `scripts/`** (MVP) |
-| `skill-lab-validate` | Verification | Enforce Appendix B hard gates; emit structured findings | Execute untrusted Skill scripts (MVP) |
+| `skill-lab-validate` | Verification | Enforce Appendix B **package** hard gates (structure, naming, static dangerous-script, applicable budget/L2-evals/L3-shape when `skill-state` is provided); emit structured findings | Execute untrusted Skill scripts (MVP); own soft-eval / suite-assertion orchestration |
 
 **Deferred (post-MVP):** workflows `improve`, `diagnose-trigger`, `extract-from-session`; agents `trigger-evaluator`, `adversarial-reviewer`, `repair-planner`; hooks; MCP; Codex adapter; execution sandbox.
 
@@ -189,7 +189,7 @@ L3 MAY set `allow_scripts` / `allow_assets` to true only when the intent explici
 
 For each checkpoint, orchestration (workflow skills) SHALL:
 
-1. Run **Verification** hard gates via `skill-lab-validate` (Appendix B package gates). Package-only gates always apply. Budget/L3 shape gates apply when a `skill-state` is available (create/repair); on bare `evaluate` of an external Skill, skip budget/L3-shape gates rather than inventing state.
+1. Run **Verification** hard gates via `skill-lab-validate` (Appendix B package gates). Package-only gates always apply. When a `skill-state` is available (create/repair), also enforce budget-related gates: Layout, L2 evals (`require_evals` / level 2), and L3 shape (level 3). On bare `evaluate` of an external Skill, skip budget/L2-evals/L3-shape gates rather than inventing state.
 2. If Appendix B (applicable subset) fails → `hard_gates_passed=false`; checkpoint **invalid**; orchestration **MUST NOT** run quality / `llm-rubric` assertions for that checkpoint unless a debug flag opts in. The validator CLI emits hard findings only — it does not own soft-eval policy.
 3. Only when package hard gates pass: run allowed suite assertions / `output-evaluator` rubrics; record criterion evidence (`severity`: `hard` | `quality`).
 4. If any assertion with `severity: hard` fails → set `hard_gates_passed=false` and invalidate the checkpoint (same as Appendix B failure). Soft/`quality` failures do not flip this flag alone.
@@ -316,6 +316,6 @@ All of the following are **blocking** (`severity: hard`). Failure ⇒ checkpoint
 | L2 evals | When create/repair provides `complexity_level=2` (or `artifact_budget.require_evals=true`), `evals/` with at least one valid output-eval suite MUST exist (skip on bare evaluate) |
 | Dangerous scripts | Static scan findings (network, destructive shell, `$HOME` writes, etc.) |
 | Portability | Generated Skill MUST NOT contain `.claude-plugin/` |
-| Hard suite assertions | Any output-eval assertion with `severity: hard` that fails (orchestration sets `hard_gates_passed=false`) |
+| Hard suite assertions | Any output-eval assertion with `severity: hard` that fails — enforced by **orchestration** (workflow skills), not by `skill-lab-validate` |
 
 Quality/`llm-rubric` scores are **non-blocking** unless an assertion explicitly sets `severity: hard`. Soft accept for L2/L3 distribution still REQUIRES human approval (§8).
