@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/yu-iskw/skill-lab/docs/contracts/schemas/skill-state.schema.json",
+  "title": "Skill Lab Skill State / Intent Contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "purpose",
+    "complexity_level",
+    "hard_constraints",
+    "success_conditions",
+    "assumptions"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "purpose": { "type": "string", "minLength": 1 },
+    "target_users": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "inputs": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "outputs": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "success_conditions": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string" }
+    },
+    "hard_constraints": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "exclusions": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "likely_failures": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "required_tools": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "irreversible_actions": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "assumptions": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "quality_level": {
+      "type": "string",
+      "enum": ["lightweight", "standard", "rigorous"]
+    },
+    "complexity_level": {
+      "type": "integer",
+      "enum": [1, 2, 3]
+    },
+    "invocation_examples": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "non_activation_examples": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "artifact_budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "allow_references": { "type": "boolean" },
+        "allow_scripts": { "type": "boolean" },
+        "allow_assets": { "type": "boolean" },
+        "require_evals": { "type": "boolean" }
+      }
+    }
+  }
+}

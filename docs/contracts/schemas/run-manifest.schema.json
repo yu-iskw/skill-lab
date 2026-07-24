@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/yu-iskw/skill-lab/docs/contracts/schemas/run-manifest.schema.json",
+  "title": "Skill Lab Run Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "run_id",
+    "workflow",
+    "skill_name",
+    "platform",
+    "plugin_version",
+    "started_at",
+    "budgets",
+    "checkpoints"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "run_id": { "type": "string", "minLength": 1 },
+    "workflow": {
+      "type": "string",
+      "enum": ["create", "evaluate", "improve", "diagnose-trigger", "extract-from-session"]
+    },
+    "skill_name": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "platform": {
+      "type": "string",
+      "enum": ["claude-code", "codex", "other"]
+    },
+    "plugin_version": { "type": "string", "minLength": 1 },
+    "model_metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "tokens": { "type": ["number", "null"] },
+        "cost": { "type": ["number", "null"] },
+        "trace_id": { "type": ["string", "null"] }
+      }
+    },
+    "input_hash": { "type": "string" },
+    "eval_suite_hash": { "type": "string" },
+    "started_at": { "type": "string", "format": "date-time" },
+    "ended_at": { "type": "string", "format": "date-time" },
+    "budgets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_iterations"],
+      "properties": {
+        "max_iterations": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "max_same_failure": { "type": "integer", "minimum": 1 },
+        "minimum_material_improvement": { "type": "number" },
+        "target_score": { "type": "number", "minimum": 0, "maximum": 100 }
+      }
+    },
+    "checkpoints": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "created_at", "hard_gates_passed"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "created_at": { "type": "string", "format": "date-time" },
+          "package_hash": { "type": "string" },
+          "overall_score": { "type": "number" },
+          "hard_gates_passed": { "type": "boolean" },
+          "selected": { "type": "boolean" }
+        }
+      }
+    },
+    "stop_reason": { "type": "string" },
+    "selected_checkpoint": { "type": ["string", "null"] }
+  }
+}
