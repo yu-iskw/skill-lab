@@ -18,5 +18,5 @@
 - [ ] Task 3: Three subagents
 - [ ] Task 4: create + evaluate skills
 - [ ] Task 5: Three fixture skills + evals
-- [ ] Task 6: Run store + gitignore + docs
+- [ ] Task 6: Plugin README / changelog (gitignore + overview already in Phase 0)
 - [ ] Task 7: CI green

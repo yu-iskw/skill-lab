@@ -313,6 +313,7 @@ All of the following are **blocking** (`severity: hard`). Failure ⇒ checkpoint
 | Eval IDs | No duplicate case/assertion IDs |
 | Fixtures | Declared fixture paths exist |
 | L3 shape | When create/repair provides `complexity_level=3`, required package/eval presence per compiler budget (skip on bare evaluate) |
+| L2 evals | When create/repair provides `complexity_level=2` (or `artifact_budget.require_evals=true`), `evals/` with at least one valid output-eval suite MUST exist (skip on bare evaluate) |
 | Dangerous scripts | Static scan findings (network, destructive shell, `$HOME` writes, etc.) |
 | Portability | Generated Skill MUST NOT contain `.claude-plugin/` |
 | Hard suite assertions | Any output-eval assertion with `severity: hard` that fails (orchestration sets `hard_gates_passed=false`) |
