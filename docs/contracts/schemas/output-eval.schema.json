@@ -73,6 +73,29 @@
           "then": {
             "properties": { "severity": { "const": "hard" } }
           }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": { "enum": ["json-schema", "static"] }
+            },
+            "required": ["type"]
+          },
+          "then": {
+            "required": ["expected"],
+            "properties": {
+              "expected": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "type": { "const": "llm-rubric" } },
+            "required": ["type"]
+          },
+          "then": {
+            "required": ["minimum_score"]
+          }
         }
       ]
     }
