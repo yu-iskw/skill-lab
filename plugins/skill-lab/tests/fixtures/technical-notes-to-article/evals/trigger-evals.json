@@ -1,0 +1,49 @@
+{
+  "schema_version": "0.1",
+  "suite_id": "technical-notes-to-article-trigger-fixture",
+  "cases": [
+    {
+      "id": "rough-notes-to-article",
+      "prompt": "Turn these incident notes into an article for the engineering blog, preserving the command output and timeline.",
+      "expected": {
+        "should_trigger": true,
+        "target_skill": "technical-notes-to-article"
+      },
+      "tags": [
+        "writing",
+        "evidence",
+        "positive"
+      ],
+      "split": "train",
+      "rationale": "The request asks to transform rough technical notes into an article while preserving evidence."
+    },
+    {
+      "id": "notes-with-uncertainty",
+      "prompt": "Draft a reader-friendly article from these migration notes. Some causes are still unknown, so do not overclaim.",
+      "expected": {
+        "should_trigger": true,
+        "target_skill": "technical-notes-to-article"
+      },
+      "tags": [
+        "writing",
+        "uncertainty",
+        "positive"
+      ],
+      "split": "validation",
+      "rationale": "The prompt needs article shaping plus explicit handling of uncertain evidence."
+    },
+    {
+      "id": "normalize-config-negative",
+      "prompt": "Lowercase these KEY=value config keys, remove comments, and sort the result.",
+      "expected": {
+        "should_trigger": false
+      },
+      "tags": [
+        "negative",
+        "config"
+      ],
+      "split": "held-out",
+      "rationale": "The request is deterministic config normalization, not article writing."
+    }
+  ]
+}

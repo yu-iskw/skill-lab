@@ -1,0 +1,95 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://example.com/skill-lab/schemas/trigger-eval.schema.json",
+  "title": "Skill Lab Trigger Evaluation Suite",
+  "description": "Trigger eval suites may be a bare array of cases or an object with a required cases array. Each case requires id, prompt, expected.should_trigger, tags, split, and rationale.",
+  "oneOf": [
+    {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/case"
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "cases"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "string"
+        },
+        "suite_id": {
+          "type": "string"
+        },
+        "cases": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/definitions/case"
+          }
+        }
+      },
+      "additionalProperties": true
+    }
+  ],
+  "definitions": {
+    "case": {
+      "type": "object",
+      "required": [
+        "id",
+        "prompt",
+        "expected",
+        "tags",
+        "split",
+        "rationale"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "prompt": {
+          "type": "string",
+          "minLength": 1
+        },
+        "expected": {
+          "type": "object",
+          "required": [
+            "should_trigger"
+          ],
+          "properties": {
+            "should_trigger": {
+              "type": "boolean"
+            },
+            "target_skill": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": true
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "split": {
+          "type": "string",
+          "enum": [
+            "train",
+            "validation",
+            "held-out"
+          ]
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}

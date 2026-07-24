@@ -1,0 +1,162 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://example.com/skill-lab/schemas/evaluation-result.schema.json",
+  "title": "Skill Lab Evaluation Result",
+  "description": "Result emitted by one Skill Lab evaluation run. Required fields: run_id, skill_name, overall_score, hard_gates_passed, criteria, best_checkpoint, stop_reason, and remaining_human_review_points.",
+  "type": "object",
+  "required": [
+    "run_id",
+    "skill_name",
+    "overall_score",
+    "hard_gates_passed",
+    "criteria",
+    "best_checkpoint",
+    "stop_reason",
+    "remaining_human_review_points"
+  ],
+  "properties": {
+    "run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "skill_name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "overall_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "hard_gates_passed": {
+      "type": "boolean"
+    },
+    "criteria": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/definitions/criterion"
+      }
+    },
+    "best_checkpoint": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/definitions/checkpoint"
+        }
+      ]
+    },
+    "stop_reason": {
+      "type": "string",
+      "enum": [
+        "passed",
+        "hard_gate_failed",
+        "budget_exhausted",
+        "max_iterations",
+        "manual_stop",
+        "no_valid_checkpoint",
+        "error"
+      ]
+    },
+    "remaining_human_review_points": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  },
+  "additionalProperties": true,
+  "definitions": {
+    "criterion": {
+      "type": "object",
+      "required": [
+        "criterion_id",
+        "score",
+        "passed",
+        "expected",
+        "observed",
+        "evidence",
+        "severity"
+      ],
+      "properties": {
+        "criterion_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "passed": {
+          "type": "boolean"
+        },
+        "expected": {},
+        "observed": {},
+        "evidence": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "additionalProperties": true
+              }
+            ]
+          }
+        },
+        "severity": {
+          "type": "string",
+          "enum": [
+            "hard",
+            "soft",
+            "info"
+          ]
+        },
+        "case_id": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": true
+    },
+    "checkpoint": {
+      "type": "object",
+      "required": [
+        "id",
+        "path",
+        "score"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "hard_gates_passed": {
+          "type": "boolean"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}
