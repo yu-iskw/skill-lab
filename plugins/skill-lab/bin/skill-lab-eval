@@ -151,15 +151,12 @@ aggregate_criteria() {
 			| ($in.criteria // []) as $criteria
 			| ($criteria | length) as $n
 			| (($criteria | map(.score) | add) / $n) as $avg
+			| ($criteria | map(.severity |= ascii_downcase)) as $normalized
 			| (
-					$criteria
-					| map(select((.severity | ascii_downcase) == "hard"))
+					$normalized
+					| map(select(.severity == "hard"))
 					| length == 0 or all(.passed == true)
 				) as $hard_ok
-			| (
-					$criteria
-					| map(.severity |= ascii_downcase)
-				) as $normalized
 			| {
 					run_id: ($in.run_id // "run-local"),
 					skill_name: ($in.skill_name // "unknown"),

@@ -296,6 +296,18 @@ folded_out="$("${validate}" --json "${tmpdir}/folded-desc" || true)"
 folded_code="$(jq -r '.findings[] | select(.code=="DESCRIPTION_MULTILINE_UNSUPPORTED") | .code' <<<"${folded_out}")"
 assert_eq "validate rejects folded description marker" "DESCRIPTION_MULTILINE_UNSUPPORTED" "${folded_code}"
 
+mkdir -p "${tmpdir}/folded-plus"
+cat >"${tmpdir}/folded-plus/SKILL.md" <<'EOF'
+---
+name: folded-plus
+description: >+
+  Body that would bypass an exact-marker check.
+---
+
+# Folded Plus
+EOF
+assert_fail "validate rejects >+ folded description marker" "${validate}" --json "${tmpdir}/folded-plus"
+
 # Shared remapper: validate warning → quality criterion
 mkdir -p "${tmpdir}/todo-skill"
 cat >"${tmpdir}/todo-skill/SKILL.md" <<'EOF'
