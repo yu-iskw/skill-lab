@@ -1,0 +1,10 @@
+{
+  "name": "hello-world",
+  "version": "1.0.0",
+  "description": "Comprehensive sample plugin demonstrating all Cursor extension points.",
+  "author": {
+    "name": "yu-iskw"
+  },
+  "license": "Apache-2.0",
+  "repository": "https://github.com/yu-iskw/claude-code-plugin-template"
+}

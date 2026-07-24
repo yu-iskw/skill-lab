@@ -1,0 +1,22 @@
+{
+  "name": "claude-plugin-template",
+  "metadata": {
+    "description": "Template repository for creating high-quality Claude Code plugins with shared CI/CD and testing infrastructure"
+  },
+  "owner": {
+    "name": "yu-iskw"
+  },
+  "plugins": [
+    {
+      "name": "hello-world",
+      "description": "Comprehensive sample plugin demonstrating all Claude Code extension points",
+      "source": "./plugins/hello-world",
+      "version": "1.0.0",
+      "author": {
+        "name": "yu-iskw"
+      },
+      "license": "Apache-2.0",
+      "repository": "https://github.com/yu-iskw/claude-code-plugin-template"
+    }
+  ]
+}

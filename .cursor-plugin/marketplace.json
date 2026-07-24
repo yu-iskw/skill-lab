@@ -1,0 +1,22 @@
+{
+  "name": "cursor-plugin-template",
+  "metadata": {
+    "description": "Template repository for creating high-quality Cursor plugins with shared CI/CD and testing infrastructure"
+  },
+  "owner": {
+    "name": "yu-iskw"
+  },
+  "plugins": [
+    {
+      "name": "hello-world",
+      "description": "Comprehensive sample plugin demonstrating all Cursor extension points",
+      "source": "./plugins/hello-world",
+      "version": "1.0.0",
+      "author": {
+        "name": "yu-iskw"
+      },
+      "license": "Apache-2.0",
+      "repository": "https://github.com/yu-iskw/claude-code-plugin-template"
+    }
+  ]
+}

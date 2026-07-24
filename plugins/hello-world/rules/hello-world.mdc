@@ -1,0 +1,22 @@
+---
+description: Hello World greeting standards and conventions
+globs:
+  - "**/*.md"
+  - "**/*.txt"
+alwaysApply: false
+---
+
+# Hello World Greeting Standards
+
+When generating or editing greeting content:
+
+- Use friendly, inclusive language
+- Prefer "Hello" or "Hi" over "Hey" in formal contexts
+- Always include the recipient's name when available
+- End greetings with a positive closing statement
+- Keep greetings concise — no more than 2 sentences
+
+## Examples
+
+Good: "Hello, Alice! Welcome to the project."
+Avoid: "Hey you, what's up?"

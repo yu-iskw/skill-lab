@@ -1,0 +1,5 @@
+# Cursor MDC (Markdown with Components) files — no prettier parser available
+**/*.mdc
+
+# SVG files — no prettier parser available without plugins
+**/*.svg
