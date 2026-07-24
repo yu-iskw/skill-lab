@@ -6,66 +6,75 @@ Skill Lab is a thin workflow-orchestration plugin: reusable domain core as porta
 
 ## End-to-end workflow
 
-The primary lifecycle starts by creating a new Skill or updating an existing Skill. The resulting Skill is then validated and evaluated. When evidence identifies a correctable problem, the create workflow may perform one bounded update before selecting the best valid checkpoint. `/skill-lab:evaluate` can also evaluate an existing Skill independently without modifying it.
+Evaluation is not an independent authoring step. It consumes a concrete Agent Skill checkpoint produced by creation or a bounded update. A manual `/skill-lab:evaluate` run also requires an existing Skill directory containing `SKILL.md`; it cannot run without that input artifact.
 
 ```mermaid
 flowchart TD
-    request["User request"]
-    operation{"Create or update a Skill?"}
-    create["Create a new Skill"]
-    update["Update an existing Skill"]
+    request["User requests a new Agent Skill"]
     collect["Collect intent, constraints, and acceptance criteria"]
     compile["Run intent-compiler"]
     safety{"Safe to continue?"}
     stop["Stop or produce a documentation-only plan"]
     architect["Run skill-architect"]
-    skill["Created or updated Skill package"]
+    candidate0["Create candidate checkpoint c0"]
+
+    existing["Existing Agent Skill checkpoint"]
+    manual["/skill-lab:evaluate <skill-dir>"]
+
+    evaluationInput["Skill checkpoint, intent contract, and optional eval suites"]
     validate["Run skill-lab-validate"]
     valid{"Package hard gates pass?"}
-    findings["Record validation findings"]
-    evaluate["Run output-evaluator"]
+    synthesize["Synthesize criteria from validation findings"]
+    evaluator["Run output-evaluator"]
     aggregate["Run skill-lab-eval aggregate"]
     acceptable{"Meets acceptance criteria?"}
-    repair{"Bounded update available?"}
-    revise["Apply one bounded Skill update"]
-    checkpoint["Build checkpoint metadata"]
+    repairAvailable{"Bounded update still available?"}
+    update["Update the Agent Skill from evaluation findings"]
+    candidate1["Create revised checkpoint c1"]
+    checkpoints["Build checkpoint metadata"]
     compare["Run skill-lab-compare"]
     select["Select the best valid checkpoint"]
-    evidence["Persist scorecard and run evidence"]
-    report["Report the Skill, score, assumptions, and limitations"]
-    standalone["/skill-lab:evaluate existing Skill"]
+    evidence["Persist validation, scorecard, and comparison evidence"]
+    report["Report the selected Skill, score, assumptions, and limitations"]
+    diagnosis["Report diagnosis without modifying the Skill"]
 
-    request --> operation
-    operation -->|"Create"| create
-    operation -->|"Update"| update
-    create --> collect
-    update --> collect
+    request --> collect
     collect --> compile
     compile --> safety
     safety -->|"No"| stop
     safety -->|"Yes"| architect
-    architect --> skill
-    skill --> validate
+    architect --> candidate0
+    candidate0 --> evaluationInput
+
+    existing --> manual
+    manual --> evaluationInput
+
+    evaluationInput --> validate
     validate --> valid
-    valid -->|"No"| findings
-    valid -->|"Yes"| evaluate
-    findings --> repair
-    evaluate --> aggregate
+    valid -->|"No"| synthesize
+    valid -->|"Yes"| evaluator
+    synthesize --> aggregate
+    evaluator --> aggregate
     aggregate --> acceptable
-    acceptable -->|"Yes"| checkpoint
-    acceptable -->|"No"| repair
-    repair -->|"Yes"| revise
-    repair -->|"No"| checkpoint
-    revise --> skill
-    checkpoint --> compare
+
+    acceptable -->|"Yes"| checkpoints
+    acceptable -->|"No"| repairAvailable
+    repairAvailable -->|"Yes, create workflow"| update
+    update --> candidate1
+    candidate1 --> evaluationInput
+    repairAvailable -->|"No"| checkpoints
+
+    checkpoints --> compare
     compare --> select
     select --> evidence
     evidence --> report
+
+    manual --> diagnosis
+    aggregate --> diagnosis
     stop --> report
-    standalone --> validate
 ```
 
-Evaluation follows creation or update in the primary workflow. A failed hard gate cannot be offset by a high average score, only one bounded update is permitted during creation, and standalone evaluation never modifies the target Skill.
+The dependency is the Skill checkpoint itself. The create workflow evaluates `c0`, may use its evidence to produce one revised checkpoint `c1`, then evaluates `c1` before comparing checkpoints. A standalone evaluation starts from an existing checkpoint and remains non-mutating. A failed hard gate cannot be offset by a high average score.
 
 ## Repository layout
 
@@ -98,8 +107,8 @@ MVP installs via the **Claude** marketplace only. Cursor/Codex marketplace manif
 
 | Surface              | Purpose                                                                     |
 | -------------------- | --------------------------------------------------------------------------- |
-| `create` skill       | Intent → minimal Skill → validate → evaluate → one repair → best checkpoint |
-| `evaluate` skill     | Non-mutating evaluation with evidence                                       |
+| `create` skill       | Intent → candidate → validate → evaluate → one update → best checkpoint     |
+| `evaluate` skill     | Evaluate an existing Skill checkpoint without modifying it                  |
 | `intent-compiler`    | Structured intent contract                                                  |
 | `skill-architect`    | Portable package generation                                                 |
 | `output-evaluator`   | Independent rubric assessment                                               |
