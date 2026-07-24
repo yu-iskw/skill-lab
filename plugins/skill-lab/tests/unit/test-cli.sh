@@ -308,6 +308,18 @@ description: >+
 EOF
 assert_fail "validate rejects >+ folded description marker" "${validate}" --json "${tmpdir}/folded-plus"
 
+mkdir -p "${tmpdir}/folded-indent"
+cat >"${tmpdir}/folded-indent/SKILL.md" <<'EOF'
+---
+name: folded-indent
+description: >1+
+  Indent-then-chomp header must also be rejected.
+---
+
+# Folded Indent
+EOF
+assert_fail "validate rejects >1+ folded description marker" "${validate}" --json "${tmpdir}/folded-indent"
+
 # Shared remapper: validate warning → quality criterion
 mkdir -p "${tmpdir}/todo-skill"
 cat >"${tmpdir}/todo-skill/SKILL.md" <<'EOF'

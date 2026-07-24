@@ -149,7 +149,7 @@ else
 
 			if [[ -z ${description} ]]; then
 				add_finding error DESCRIPTION_MISSING "frontmatter field 'description' is required"
-			elif [[ ${description} =~ ^[\>\|][\+\-]?[0-9]*([[:space:]]*(#.*)?)?$ ]]; then
+			elif [[ ${description} =~ ^[\>\|]([0-9]*[\+\-]?|[\+\-]?[0-9]*)([[:space:]]*(#.*)?)?$ ]]; then
 				add_finding error DESCRIPTION_MULTILINE_UNSUPPORTED "description must be a single-line scalar (folded/literal YAML blocks are not supported)"
 			else
 				desc_len=${#description}
