@@ -51,6 +51,9 @@ case "$1" in
 -*)
 	skill_lab_die "unknown option: $1"
 	;;
+*)
+	:
+	;;
 esac
 
 input_path="$1"

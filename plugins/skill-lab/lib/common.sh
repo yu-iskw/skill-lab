@@ -15,6 +15,7 @@
 # shellcheck shell=bash
 
 skill_lab_lib_dir="$(CDPATH='' cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck disable=SC2034 # reserved for plugin-root relative helpers
 skill_lab_plugin_root="$(CDPATH='' cd -- "${skill_lab_lib_dir}/.." && pwd)"
 
 skill_lab_die() {
