@@ -14,7 +14,7 @@ Delegate to `intent-compiler`. Treat the compiled contract as the working spec. 
 
 ## Phase 3 — Route complexity
 
-Use `complexity-routing.md`. If uncertain, choose the higher level. Level 3 means slow down or stop at unsafe boundaries—do not implement credential/billing/delete/deploy/permission automation.
+Use `complexity-routing.md`. If uncertain, choose the higher level. Level 3 means slow down or stop at unsafe boundaries—do not implement credential/billing/delete/deploy/permission automation. Exception: when the user explicitly wants a documentation-only plan-and-stop Skill (fixture `propose-deploy-stop`), continue with architect using the rigorous template.
 
 ## Phase 4 — Architect
 
@@ -26,14 +26,14 @@ Delegate to `skill-architect` with contract, complexity level, write root, and `
 "$CLAUDE_PLUGIN_ROOT/bin/skill-lab-validate" --json <skill-dir>
 ```
 
-Validation is a hard gate. Invalid checkpoints cannot be selected. Prefer `--json` so findings can be synthesized into aggregate criteria on failure.
+Validation is a hard gate. Invalid checkpoints cannot be selected. Prefer `--json` and capture stdout even when exit code is `1`. On failure, synthesize criteria using create `SKILL.md` **Hard-fail scorecard synthesis** (map validate `error` → criterion `hard`; never pass `severity: "error"` to aggregate).
 
 ## Phase 6 — Evaluate and scorecard
 
-MVP eval suites are **structure-validated only** (no assertion execution).
+MVP eval suites are **structure-validated only** (no assertion execution). Only `evals/trigger-evals.json` and `evals/output-evals.json` are checked.
 
 ```bash
-# When evals exist (any level)
+# When canonical eval files exist (any level)
 "$CLAUDE_PLUGIN_ROOT/bin/skill-lab-eval" --validate-only <skill-dir>
 ```
 
@@ -42,6 +42,8 @@ Build a **non-empty** `criteria.json`, then always aggregate:
 ```bash
 "$CLAUDE_PLUGIN_ROOT/bin/skill-lab-eval" --aggregate <criteria.json> --out <scorecard.json>
 ```
+
+Keep `--out` even when exit code is `1`.
 
 - Level 1 (valid package): lightweight review + deterministic checks (+ structure-validate evals if present). Optional short `output-evaluator` pass to author criteria.
 - Level 2+ (valid package): isolated `output-evaluator` authors criteria.
@@ -54,6 +56,8 @@ Criteria must use severity `hard|quality|info` and boolean `passed`. Include `ru
 Repair only validator or evaluation failures. Re-run validation and evaluation. Do not start a second repair loop.
 
 ## Phase 8 — Select best valid checkpoint
+
+Build `checkpoints.json` from the scorecard. Map `overall_score` → `score`. Do **not** pass `scorecard.json` to compare.
 
 ```bash
 "$CLAUDE_PLUGIN_ROOT/bin/skill-lab-compare" <checkpoints.json>

@@ -20,6 +20,8 @@
 - `skill-lab-validate` requires a closing YAML frontmatter `---` delimiter
 - Create/evaluate skills document exact CLI argv, hard-fail scorecard synthesis, and structure-only eval suites
 - Subagents aligned to CLI contracts: templates by complexity, aggregate handoff fields, `hard_gates_passed` plural, quality→complexity mapping
+- Create hard-fail synthesis inlined (map validate `error` → criterion `hard`); checkpoint `overall_score` → `score` mapping documented
+- Architect rename checklist + full trigger/output eval required fields; evaluator uses `$CLAUDE_PLUGIN_ROOT/bin` paths only
 
 ### Removed
 

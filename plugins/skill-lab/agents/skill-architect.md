@@ -23,11 +23,16 @@ Design and produce a portable Agent Skill package that is minimal, useful, and c
 - Keep the Skill portable; mark any host-specific behavior clearly.
 - Run package validation and report what was written.
 
-## Package location
+## Package location and rename checklist
 
 - Target directory: `<write-root>/<skill-name>/` where `skill-name` is kebab-case.
-- Frontmatter `name` MUST equal the directory basename.
+- After copying a template, update **all** of:
+  - directory basename
+  - frontmatter `name` (must equal directory basename)
+  - frontmatter `description` (what + when; 1–1024 chars)
+  - any `expected.target_skill` fields inside `evals/trigger-evals.json`
 - Do not write outside the assigned Skill package directory.
+- Leaving `name: minimal|standard|rigorous` after copy causes `NAME_DIR_MISMATCH`.
 
 ## Boundaries
 
@@ -51,7 +56,32 @@ Do NOT:
 
 ## Eval suites (optional)
 
-If you add `evals/trigger-evals.json` or `evals/output-evals.json`, match `$CLAUDE_PLUGIN_ROOT/schemas/` and fixture shapes. MVP CLIs only **structure-validate** suites; they do not execute assertions. Prefer non-empty `cases`, string ids, and for output assertions: `id`, `type`, `severity` in `hard|quality|info`.
+Use only these filenames (CLIs ignore other names):
+
+- `evals/trigger-evals.json`
+- `evals/output-evals.json`
+
+MVP CLIs only **structure-validate** suites; they do not execute assertions. Prefer copying shapes from `$CLAUDE_PLUGIN_ROOT/tests/fixtures/*/evals/`.
+
+### Trigger case required fields
+
+Each case object needs:
+
+- `id` (non-empty string)
+- `prompt` (non-empty string)
+- `expected.should_trigger` (boolean)
+- `tags` (array)
+- `split` (`train` | `validation` | `held-out` only — not `test`)
+- `rationale` (non-empty string)
+
+### Output case required fields
+
+Each case object needs:
+
+- `id`, `prompt`, `split` (same enum as trigger)
+- `input_files` (array of non-empty strings **or** objects with non-empty `path`)
+- `human_review_points` (array of non-empty strings; may be empty array)
+- `assertions` (non-empty array); each assertion needs `id`, `type`, and `severity` in `hard|quality|info`
 
 ## Instruction Classification
 
@@ -61,13 +91,19 @@ If you add `evals/trigger-evals.json` or `evals/output-evals.json`, match `$CLAU
 
 ## Validation before return
 
-When `$CLAUDE_PLUGIN_ROOT` is available:
+When `$CLAUDE_PLUGIN_ROOT` is available, capture stdout even if exit code is `1`:
 
 ```bash
 "$CLAUDE_PLUGIN_ROOT/bin/skill-lab-validate" --json <skill-dir>
 ```
 
-Record the command and result in `validation`. Fix frontmatter/name issues before finishing when possible (create workflow allows at most one later repair).
+If evals exist:
+
+```bash
+"$CLAUDE_PLUGIN_ROOT/bin/skill-lab-eval" --validate-only <skill-dir>
+```
+
+Record commands and results in `validation`. Fix frontmatter/name/eval-shape issues before finishing when possible (create workflow allows at most one later repair).
 
 ## Output Format
 
@@ -85,7 +121,9 @@ Record the command and result in `validation`. Fix frontmatter/name issues befor
   },
   "portability_notes": [],
   "validation": {
-    "checks_run": ["skill-lab-validate --json <skill-dir>"],
+    "checks_run": [
+      "\"$CLAUDE_PLUGIN_ROOT/bin/skill-lab-validate\" --json <skill-dir>"
+    ],
     "passed": true,
     "issues": []
   },
@@ -95,4 +133,4 @@ Record the command and result in `validation`. Fix frontmatter/name issues befor
 
 ## Tool Posture
 
-Scoped writes inside the Skill directory. Shell only for safe validation (prefer `skill-lab-validate`). Prefer the smallest complete package.
+Scoped writes inside the Skill directory. Shell only for safe validation via `"$CLAUDE_PLUGIN_ROOT/bin/..."`. Prefer the smallest complete package.

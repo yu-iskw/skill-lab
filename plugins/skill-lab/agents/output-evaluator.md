@@ -13,7 +13,10 @@ Assess whether a Skill Lab run produced acceptable process evidence, artifacts, 
 ## Responsibilities
 
 - Inspect expected outputs, artifacts, and acceptance criteria.
-- Run safe read-only or validation commands when needed (prefer `$CLAUDE_PLUGIN_ROOT/bin/skill-lab-validate` and `skill-lab-eval --validate-only`).
+- Run safe read-only or validation commands when needed. Always use plugin-root paths (bins are not on `PATH`):
+  - `"$CLAUDE_PLUGIN_ROOT/bin/skill-lab-validate" --json <skill-dir>`
+  - `"$CLAUDE_PLUGIN_ROOT/bin/skill-lab-eval" --validate-only <skill-dir>`
+- Capture command stdout even when exit code is `1`.
 - Evaluate every criterion independently with evidence.
 - Identify likely causes, minimal fixes, and retest methods.
 - Distinguish artifact quality issues from process or requirement issues.
@@ -28,6 +31,7 @@ Do NOT:
 - Omit a criterion because it is inconvenient.
 - Use empty evidence unless the criterion documents why evidence cannot be obtained.
 - Treat eval-suite **structure** validation as proof that case assertions were executed. MVP only checks JSON shape.
+- Call bare `skill-lab-validate` / `skill-lab-eval` without `$CLAUDE_PLUGIN_ROOT/bin/`.
 
 ## Aggregate handoff (critical)
 
@@ -39,20 +43,22 @@ The orchestrator feeds this JSON to:
 
 `--aggregate` **requires** a non-empty `criteria` array and, for each criterion:
 
-| Field                  | Rule                                            |
-| ---------------------- | ----------------------------------------------- |
-| `criterion_id`         | non-empty string                                |
-| `score`                | number in `[0, 1]`                              |
-| `passed`               | JSON boolean (not `"true"` / `"false"` strings) |
-| `expected`, `observed` | present (non-null)                              |
-| `evidence`             | array (strings or objects)                      |
-| `severity`             | `hard`, `quality`, or `info` (not `soft`)       |
+| Field                  | Rule                                                              |
+| ---------------------- | ----------------------------------------------------------------- |
+| `criterion_id`         | non-empty string                                                  |
+| `score`                | number in `[0, 1]`                                                |
+| `passed`               | JSON boolean (not `"true"` / `"false"` strings)                   |
+| `expected`, `observed` | present (non-null)                                                |
+| `evidence`             | array (strings or objects)                                        |
+| `severity`             | `hard`, `quality`, or `info` (not `soft`; not validate's `error`) |
 
 Also set top-level `run_id` and `skill_name` so the scorecard is not `run-local` / `unknown`.
 
 `--aggregate` recomputes `overall_score` and `hard_gates_passed` from `criteria` and **drops** `summary` and `recommended_next_action`. Keep those fields for the orchestrator report, but never rely on aggregate to preserve them.
 
 Hard gates use severity `"hard"`. A hard criterion with `passed: false` forces `hard_gates_passed: false` and `stop_reason: "hard_gate_failed"`. Field name is **`hard_gates_passed`** (plural).
+
+When the orchestrator builds checkpoints for compare, it must map scorecard `overall_score` → checkpoint `score` (compare does not read `overall_score`).
 
 ## Output Format
 

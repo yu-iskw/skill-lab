@@ -10,7 +10,7 @@ Normalize to a skill directory containing `SKILL.md`. Do not edit the target.
 "$CLAUDE_PLUGIN_ROOT/bin/skill-lab-validate" --json <skill-dir>
 ```
 
-Package validation is a hard gate. Keep the JSON findings even when `passed` is false.
+Package validation is a hard gate. Capture stdout even when exit code is `1`. Keep the JSON findings even when `passed` is false.
 
 ## Validate eval schemas
 
@@ -36,13 +36,13 @@ When package validation failed, **skip** the evaluator and synthesize criteria f
 
 Exit code `1` with a written scorecard means hard gates failed—still report it.
 
-Optional:
+Optional: build a checkpoints file first (map scorecard `overall_score` → checkpoint `score`; never pass the scorecard file), then:
 
 ```bash
 "$CLAUDE_PLUGIN_ROOT/bin/skill-lab-compare" <checkpoints.json>
 ```
 
-Checkpoints require boolean `hard_gates_passed` (plural). Copy evaluator `recommended_next_action` into the human report; aggregate drops it.
+Checkpoints require numeric `score` and boolean `hard_gates_passed` (plural). Copy evaluator `recommended_next_action` into the human report; aggregate drops it.
 
 ## Evidence
 

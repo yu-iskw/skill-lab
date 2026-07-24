@@ -41,6 +41,25 @@ Use `"unknown"` for hashes when not computed. Copy selected checkpoint metadata 
 
 Prefer the JSON written by `--aggregate --out`. That object uses `hard_gates_passed` (plural) and does not retain evaluator `summary` or `recommended_next_action`—store those under `evaluations/` or the user report.
 
+## `checkpoints/index.json`
+
+Compare input (not the scorecard). Map scorecard `overall_score` → checkpoint `score`:
+
+```json
+{
+  "checkpoints": [
+    {
+      "id": "c0",
+      "path": "<skill-dir>",
+      "score": 0.9,
+      "hard_gates_passed": true,
+      "file_count": 2,
+      "created_at": "2026-07-24T21:00:00Z"
+    }
+  ]
+}
+```
+
 ## Rules
 
 - Generated Skill packages and curated evals may be version-controlled.
@@ -48,4 +67,4 @@ Prefer the JSON written by `--aggregate --out`. That object uses `hard_gates_pas
 - Never persist secrets, tokens, private keys, or raw environment dumps.
 - Preserve every checkpoint used for selection.
 - Scorecards must cite evidence for every claimed pass.
-- `--aggregate` exits `1` when hard gates fail; still keep the written scorecard.
+- `--aggregate` and `validate --json` may exit `1` while still emitting JSON; capture stdout / keep `--out`.
