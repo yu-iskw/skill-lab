@@ -1,0 +1,62 @@
+{
+  "schema_version": "0.1",
+  "suite_id": "normalize-config-output-fixture",
+  "cases": [
+    {
+      "id": "normalizes-and-deduplicates-env",
+      "prompt": "Normalize app.env using the normalize-config rules.",
+      "input_files": [
+        {
+          "path": "app.env",
+          "content": " PORT = 3000\\n# local override\\nDEBUG=true\\nName = API\\nport=8080\\n"
+        }
+      ],
+      "assertions": [
+        {
+          "id": "exact-normalized-output",
+          "type": "equals_output",
+          "severity": "hard",
+          "expected": "debug=true\\nname=API\\nport=8080\\n"
+        },
+        {
+          "id": "no-comments-in-output",
+          "type": "not_contains",
+          "severity": "quality",
+          "expected": "#"
+        }
+      ],
+      "human_review_points": [
+        "Confirm duplicate key handling kept the last port value."
+      ],
+      "split": "train"
+    },
+    {
+      "id": "stops-on-invalid-line",
+      "prompt": "Normalize broken.env using the normalize-config rules.",
+      "input_files": [
+        {
+          "path": "broken.env",
+          "content": "API_URL=https://example.test\\nnot a key value line\\nTOKEN = abc\\n"
+        }
+      ],
+      "assertions": [
+        {
+          "id": "reports-invalid-line",
+          "type": "contains",
+          "severity": "hard",
+          "expected": "not a key value line"
+        },
+        {
+          "id": "does-not-guess-output",
+          "type": "not_contains",
+          "severity": "hard",
+          "expected": "api_url=https://example.test"
+        }
+      ],
+      "human_review_points": [
+        "Confirm the response stops rather than producing a partial normalized config."
+      ],
+      "split": "validation"
+    }
+  ]
+}

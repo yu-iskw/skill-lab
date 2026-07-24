@@ -1,0 +1,38 @@
+{
+  "schema_version": "0.1",
+  "suite_id": "normalize-config-trigger-fixture",
+  "cases": [
+    {
+      "id": "normalize-env-basic",
+      "prompt": "Normalize this .env file so it is stable for review: PORT = 3000\\nName = API\\nport=8080",
+      "expected": {
+        "should_trigger": true,
+        "target_skill": "normalize-config"
+      },
+      "tags": ["deterministic", "env", "positive"],
+      "split": "train",
+      "rationale": "The prompt asks for deterministic normalization of a .env-style config."
+    },
+    {
+      "id": "sort-config-before-diff",
+      "prompt": "Before I diff these settings, lowercase the keys and sort the simple KEY=value lines.",
+      "expected": {
+        "should_trigger": true,
+        "target_skill": "normalize-config"
+      },
+      "tags": ["deterministic", "sorting", "positive"],
+      "split": "validation",
+      "rationale": "The user describes the exact normalize-config behavior: lowercase keys and sorted KEY=value output."
+    },
+    {
+      "id": "article-request-negative",
+      "prompt": "Turn these technical notes into a short article for engineering leadership.",
+      "expected": {
+        "should_trigger": false
+      },
+      "tags": ["negative", "writing"],
+      "split": "held-out",
+      "rationale": "The request is subjective writing, not config normalization."
+    }
+  ]
+}

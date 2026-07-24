@@ -20,6 +20,10 @@ lint:
 format:
 	trunk fmt --all
 
+.PHONY: test-unit
+test-unit:
+	./plugins/skill-lab/tests/unit/test-cli.sh
+
 .PHONY: test-integration-docker
 test-integration-docker:
 	docker build -f integration_tests/Dockerfile -t claude-plugin-template-smoke .

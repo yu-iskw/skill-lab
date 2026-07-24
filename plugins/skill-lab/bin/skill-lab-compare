@@ -1,0 +1,89 @@
+#!/usr/bin/env bash
+
+# Copyright 2026 yu-iskw
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Select the highest-scoring valid checkpoint. Hard-gate failures are ineligible.
+set -euo pipefail
+
+script_dir="$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)"
+# shellcheck source=../lib/common.sh
+source "${script_dir}/../lib/common.sh"
+
+skill_lab_require_jq
+
+usage() {
+	cat <<'EOF'
+Usage: skill-lab-compare <checkpoints.json>
+
+checkpoints.json may be an array of checkpoints or an object with a
+"checkpoints" array. Each checkpoint should include:
+  id, score in [0,1], hard_gates_passed (bool), optional path, optional created_at,
+  optional file_count (for tie-break: prefer smaller package).
+
+Prints the selected checkpoint as JSON, or {"selected": null, "reason": "..."}
+when no valid checkpoint exists. Exit code 0 when a valid checkpoint is
+selected; 1 otherwise.
+EOF
+}
+
+if [[ $# -lt 1 ]]; then
+	usage >&2
+	exit 2
+fi
+
+case "$1" in
+-h | --help)
+	usage
+	exit 0
+	;;
+-*)
+	skill_lab_die "unknown option: $1"
+	;;
+*)
+	input_path="$1"
+	;;
+esac
+skill_lab_require_file "${input_path}"
+skill_lab_json_ok "${input_path}"
+
+if ! jq -e '
+	(if type=="array" then . else (.checkpoints // []) end) as $all
+	| ($all | length == 0)
+		or all($all[];
+			(.score | type) == "number" and .score >= 0 and .score <= 1
+			and (.hard_gates_passed | type) == "boolean"
+		)
+' "${input_path}" >/dev/null 2>&1; then
+	skill_lab_die "checkpoints require score in [0,1] and boolean hard_gates_passed"
+fi
+
+result="$(
+	jq -c '
+		(if type=="array" then . else (.checkpoints // []) end) as $all
+		| ($all | map(select(.hard_gates_passed == true))) as $valid
+		| if ($valid | length) == 0 then
+				{selected: null, reason: "no_valid_checkpoint", candidates: $all}
+			else
+				(
+					$valid
+					| min_by([-(.score), (.file_count // 0), (.created_at // ""), (.id // "")])
+				) as $best
+				| {selected: $best, reason: "best_valid_checkpoint", valid_count: ($valid|length), candidate_count: ($all|length)}
+			end
+	' "${input_path}"
+)"
+
+printf '%s\n' "${result}"
+jq -e '.selected != null' <<<"${result}" >/dev/null

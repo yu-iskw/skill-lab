@@ -1,0 +1,198 @@
+#!/usr/bin/env bash
+
+# Copyright 2026 yu-iskw
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Validate eval suites and aggregate evaluation criterion results.
+set -euo pipefail
+
+script_dir="$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)"
+# shellcheck source=../lib/common.sh
+source "${script_dir}/../lib/common.sh"
+
+skill_lab_require_jq
+
+usage() {
+	cat <<'EOF'
+Usage:
+  skill-lab-eval --validate-only <skill-dir>
+  skill-lab-eval --aggregate <criteria.json> [--out <result.json>]
+
+--validate-only   Validate trigger/output eval JSON structure for a skill.
+--aggregate       Aggregate criterion results into an evaluation-result object.
+                  Hard-gate failures force hard_gates_passed=false regardless of average score.
+EOF
+}
+
+mode=""
+skill_dir=""
+criteria_path=""
+out_path=""
+
+while [[ $# -gt 0 ]]; do
+	case "$1" in
+	--validate-only)
+		mode=validate
+		shift
+		skill_dir="${1-}"
+		[[ -n ${skill_dir} ]] || skill_lab_die "--validate-only requires <skill-dir>"
+		shift
+		;;
+	--aggregate)
+		mode=aggregate
+		shift
+		criteria_path="${1-}"
+		[[ -n ${criteria_path} ]] || skill_lab_die "--aggregate requires <criteria.json>"
+		shift
+		;;
+	--out)
+		shift
+		out_path="${1-}"
+		[[ -n ${out_path} ]] || skill_lab_die "--out requires a path"
+		shift
+		;;
+	-h | --help)
+		usage
+		exit 0
+		;;
+	*)
+		skill_lab_die "unknown argument: $1"
+		;;
+	esac
+done
+
+[[ -n ${mode} ]] || {
+	usage >&2
+	exit 2
+}
+
+validate_skill_evals() {
+	local dir="$1"
+	skill_lab_require_dir "${dir}"
+	dir="$(CDPATH='' cd -- "${dir}" && pwd)"
+
+	local errors=0
+	local checks=()
+
+	check_file() {
+		local path="$1"
+		local kind="$2"
+		if [[ ! -f ${path} ]]; then
+			return 0
+		fi
+
+		local findings_json
+		local parse_ok=0
+		findings_json="$(skill_lab_eval_suite_findings "${path}" "${kind}")" || parse_ok=$?
+		local finding_count
+		finding_count="$(jq 'length' <<<"${findings_json}")"
+		local ok=true
+		local msg="ok"
+		if ((finding_count > 0)) || ((parse_ok != 0)); then
+			ok=false
+			msg="$(jq -r '.[0].message // "eval suite invalid"' <<<"${findings_json}")"
+			errors=$((errors + 1))
+		fi
+		checks+=("$(jq -nc --arg path "${path}" --arg kind "${kind}" --argjson ok "${ok}" --arg msg "${msg}" \
+			'{path:$path, kind:$kind, ok:$ok, message:$msg}')")
+	}
+
+	check_file "${dir}/evals/trigger-evals.json" trigger
+	check_file "${dir}/evals/output-evals.json" output
+
+	local report='[]'
+	if ((${#checks[@]} > 0)); then
+		report="$(printf '%s\n' "${checks[@]}" | jq -s '.')"
+	fi
+
+	jq -nc --arg skill_dir "${dir}" --argjson passed "$((errors == 0))" --argjson error_count "${errors}" --argjson checks "${report}" \
+		'{skill_dir:$skill_dir, passed:($passed == 1), error_count:$error_count, checks:$checks}'
+
+	((errors == 0))
+}
+
+aggregate_criteria() {
+	local path="$1"
+	skill_lab_require_file "${path}"
+	skill_lab_json_ok "${path}"
+
+	if ! jq -e '
+		(if type=="array" then {criteria:.} else . end) as $in
+		| ($in.criteria // []) as $criteria
+		| ($criteria | length) > 0
+		and all($criteria[];
+			(.criterion_id | type == "string" and length > 0)
+			and (.score | type == "number" and . >= 0 and . <= 1)
+			and (.passed | type == "boolean")
+			and ((.severity | type == "string") and ((.severity | ascii_downcase) | IN("hard","quality","info")))
+			and (.expected != null)
+			and (.observed != null)
+			and (.evidence | type == "array")
+			and all(.evidence[]; (type == "string") or (type == "object"))
+		)
+	' "${path}" >/dev/null 2>&1; then
+		skill_lab_die "aggregate requires non-empty criteria with criterion_id, score in [0,1], boolean passed, severity hard|quality|info, expected, observed, and evidence[] of strings or objects"
+	fi
+
+	local result
+	result="$(
+		jq -c '
+			(if type=="array" then {criteria:.} else . end) as $in
+			| ($in.criteria // []) as $criteria
+			| ($criteria | length) as $n
+			| (($criteria | map(.score) | add) / $n) as $avg
+			| ($criteria | map(.severity |= ascii_downcase)) as $normalized
+			| (
+					$normalized
+					| map(select(.severity == "hard"))
+					| length == 0 or all(.passed == true)
+				) as $hard_ok
+			| {
+					run_id: ($in.run_id // "run-local"),
+					skill_name: ($in.skill_name // "unknown"),
+					overall_score: $avg,
+					hard_gates_passed: $hard_ok,
+					criteria: $normalized,
+					best_checkpoint: ($in.best_checkpoint // null),
+					stop_reason: (
+						if $hard_ok then ($in.stop_reason // "passed")
+						else "hard_gate_failed"
+						end
+					),
+					remaining_human_review_points: ($in.remaining_human_review_points // [])
+				}
+		' "${path}"
+	)"
+
+	if [[ -n ${out_path} ]]; then
+		printf '%s\n' "${result}" >"${out_path}"
+		echo "wrote ${out_path}"
+	else
+		printf '%s\n' "${result}"
+	fi
+
+	jq -e '.hard_gates_passed == true' <<<"${result}" >/dev/null
+}
+
+case "${mode}" in
+validate)
+	validate_skill_evals "${skill_dir}"
+	;;
+aggregate)
+	aggregate_criteria "${criteria_path}"
+	;;
+*)
+	skill_lab_die "unsupported mode: ${mode}"
+	;;
+esac

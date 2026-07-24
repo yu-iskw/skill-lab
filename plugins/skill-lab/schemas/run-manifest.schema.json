@@ -1,0 +1,119 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://example.com/skill-lab/schemas/run-manifest.schema.json",
+  "title": "Skill Lab Run Manifest",
+  "description": "Manifest for one Skill Lab run. Required fields: run_id, workflow, skill_name, platform, plugin_version, input_hash, eval_suite_hash, started_at, budgets, and checkpoints.",
+  "type": "object",
+  "required": [
+    "run_id",
+    "workflow",
+    "skill_name",
+    "platform",
+    "plugin_version",
+    "input_hash",
+    "eval_suite_hash",
+    "started_at",
+    "budgets",
+    "checkpoints"
+  ],
+  "properties": {
+    "run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "workflow": {
+      "type": "string",
+      "enum": ["create", "evaluate", "repair", "compare"]
+    },
+    "skill_name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "platform": {
+      "type": "string",
+      "minLength": 1
+    },
+    "plugin_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "input_hash": {
+      "type": "string",
+      "minLength": 1
+    },
+    "eval_suite_hash": {
+      "type": "string",
+      "minLength": 1
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "budgets": {
+      "type": "object",
+      "required": ["max_iterations"],
+      "properties": {
+        "max_iterations": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_wall_clock_seconds": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_model_calls": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "max_output_eval_cases": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": true
+    },
+    "checkpoints": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/checkpoint"
+      }
+    }
+  },
+  "additionalProperties": true,
+  "definitions": {
+    "checkpoint": {
+      "type": "object",
+      "required": ["id", "path", "created_at"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "input_hash": {
+          "type": "string"
+        },
+        "score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "hard_gates_passed": {
+          "type": "boolean"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["created", "evaluated", "rejected", "selected"]
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}

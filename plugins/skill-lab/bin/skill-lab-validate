@@ -1,0 +1,200 @@
+#!/usr/bin/env bash
+
+# Copyright 2026 yu-iskw
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Validate an Agent Skill package against Agent Skills naming/metadata rules
+# and Skill Lab structural expectations.
+set -euo pipefail
+
+script_dir="$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)"
+# shellcheck source=../lib/common.sh
+source "${script_dir}/../lib/common.sh"
+
+skill_lab_require_jq
+
+usage() {
+	cat <<'EOF'
+Usage: skill-lab-validate [--json] <skill-dir>
+
+Validate SKILL.md frontmatter, name/directory equality, description length,
+and optional eval JSON structure for a portable Agent Skill package.
+EOF
+}
+
+json_output=false
+skill_dir=""
+
+while [[ $# -gt 0 ]]; do
+	case "$1" in
+	--json)
+		json_output=true
+		shift
+		;;
+	-h | --help)
+		usage
+		exit 0
+		;;
+	-*)
+		skill_lab_die "unknown option: $1"
+		;;
+	*)
+		skill_dir="$1"
+		shift
+		;;
+	esac
+done
+
+[[ -n ${skill_dir} ]] || {
+	usage >&2
+	exit 2
+}
+skill_lab_require_dir "${skill_dir}"
+
+skill_dir="$(CDPATH='' cd -- "${skill_dir}" && pwd)"
+dir_name="$(basename -- "${skill_dir}")"
+skill_md="${skill_dir}/SKILL.md"
+findings=()
+errors=0
+
+add_finding() {
+	local severity="$1"
+	local code="$2"
+	local message="$3"
+	local finding
+	# shellcheck disable=SC2311 # emit_finding is pure jq; failures should not abort collection
+	finding="$(skill_lab_emit_finding "${severity}" "${code}" "${message}")"
+	findings+=("${finding}")
+	if [[ ${severity} == error ]]; then
+		errors=$((errors + 1))
+	fi
+}
+
+emit_report() {
+	local passed=true
+	if ((errors > 0)); then
+		passed=false
+	fi
+
+	if [[ ${json_output} == true ]]; then
+		local findings_json='[]'
+		if ((${#findings[@]} > 0)); then
+			findings_json="$(printf '%s\n' "${findings[@]}" | jq -s '.')"
+		fi
+		jq -nc \
+			--arg skill_dir "${skill_dir}" \
+			--arg skill_name "${dir_name}" \
+			--argjson passed "${passed}" \
+			--argjson error_count "${errors}" \
+			--argjson findings "${findings_json}" \
+			'{skill_dir:$skill_dir, skill_name:$skill_name, passed:$passed, error_count:$error_count, findings:$findings}'
+	else
+		echo "skill-lab-validate: ${dir_name}"
+		if ((${#findings[@]} == 0)); then
+			echo "OK: no findings"
+		else
+			printf '%s\n' "${findings[@]}" | jq -r '"\(.severity | ascii_upcase) \(.code): \(.message)"'
+		fi
+		if [[ ${passed} == true ]]; then
+			echo "RESULT: PASS"
+		else
+			echo "RESULT: FAIL (${errors} error(s))"
+		fi
+	fi
+
+	[[ ${passed} == true ]]
+}
+
+if [[ ! -f ${skill_md} ]]; then
+	add_finding error MISSING_SKILL_MD "SKILL.md is required"
+else
+	if ! head -n 1 "${skill_md}" | grep -qx -- '---'; then
+		add_finding error FRONTMATTER_MISSING "SKILL.md must start with YAML frontmatter"
+	else
+		frontmatter_closed_ok=0
+		# shellcheck disable=SC2310 # predicate intentionally captured without exiting
+		skill_lab_frontmatter_is_closed "${skill_md}" || frontmatter_closed_ok=$?
+		if [[ ${frontmatter_closed_ok} -ne 0 ]]; then
+			add_finding error FRONTMATTER_UNCLOSED "SKILL.md frontmatter must end with a closing --- delimiter"
+		else
+			# shellcheck disable=SC2311 # frontmatter helpers return empty string on miss
+			name="$(skill_lab_frontmatter_field "${skill_md}" name)"
+			# shellcheck disable=SC2311
+			description="$(skill_lab_frontmatter_field "${skill_md}" description)"
+
+			if [[ -z ${name} ]]; then
+				add_finding error NAME_MISSING "frontmatter field 'name' is required"
+			else
+				name_ok=0
+				# shellcheck disable=SC2310 # predicate intentionally captured without exiting
+				skill_lab_is_valid_skill_name "${name}" || name_ok=$?
+				if [[ ${name_ok} -ne 0 ]]; then
+					add_finding error NAME_INVALID "name must be 1-64 chars, lowercase alphanumeric with single hyphens: '${name}'"
+				fi
+				if [[ ${name} != "${dir_name}" ]]; then
+					add_finding error NAME_DIR_MISMATCH "name '${name}' must match directory '${dir_name}'"
+				fi
+			fi
+
+			if [[ -z ${description} ]]; then
+				add_finding error DESCRIPTION_MISSING "frontmatter field 'description' is required"
+			elif [[ ${description} =~ ^[\>\|]([0-9]*[\+\-]?|[\+\-]?[0-9]*)([[:space:]]*(#.*)?)?$ ]]; then
+				add_finding error DESCRIPTION_MULTILINE_UNSUPPORTED "description must be a single-line scalar (folded/literal YAML blocks are not supported)"
+			else
+				desc_len=${#description}
+				if ((desc_len > 1024)); then
+					add_finding error DESCRIPTION_LENGTH "description length must be 1-1024 (got ${desc_len})"
+				fi
+			fi
+		fi
+	fi
+fi
+
+if [[ -f ${skill_md} ]] && grep -Eq 'TODO|FIXME|TBD|<[A-Z_]+>' "${skill_md}"; then
+	add_finding warning FORBIDDEN_PLACEHOLDER "SKILL.md contains unfinished placeholder markers"
+fi
+
+validate_eval_file() {
+	local path="$1"
+	local kind="$2"
+	local findings_json
+	local status=0
+	local finding_count=0
+	findings_json="$(skill_lab_eval_suite_findings "${path}" "${kind}")" || status=$?
+	if [[ -z ${findings_json} ]]; then
+		findings_json="$(jq -nc --arg kind "${kind}" '[{code:"EVAL_CHECK_FAILED", message:($kind + ": unable to evaluate suite")}]')"
+		status=1
+	fi
+	finding_count="$(jq 'length' <<<"${findings_json}")"
+	if ((status != 0)) || ((finding_count > 0)); then
+		local row code message
+		local rows
+		rows="$(jq -c '.[]' <<<"${findings_json}")"
+		while IFS= read -r row; do
+			[[ -z ${row} ]] && continue
+			code="$(jq -r '.code' <<<"${row}")"
+			message="$(jq -r '.message' <<<"${row}")"
+			add_finding error "${code}" "${message}"
+		done <<<"${rows}"
+	fi
+}
+
+if [[ -f ${skill_dir}/evals/trigger-evals.json ]]; then
+	validate_eval_file "${skill_dir}/evals/trigger-evals.json" trigger
+fi
+if [[ -f ${skill_dir}/evals/output-evals.json ]]; then
+	validate_eval_file "${skill_dir}/evals/output-evals.json" output
+fi
+
+emit_report
