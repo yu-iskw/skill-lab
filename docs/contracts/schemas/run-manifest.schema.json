@@ -68,9 +68,8 @@
           "id": { "type": "string", "minLength": 1 },
           "created_at": { "type": "string", "format": "date-time" },
           "package_hash": { "type": "string" },
-          "overall_score": { "type": "number" },
-          "hard_gates_passed": { "type": "boolean" },
-          "selected": { "type": "boolean" }
+          "overall_score": { "$ref": "common.schema.json#/$defs/score0to100" },
+          "hard_gates_passed": { "type": "boolean" }
         }
       }
     },

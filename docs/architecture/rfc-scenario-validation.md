@@ -147,10 +147,9 @@ MVP has **no** `improve` skill. Closest path: human edits description/triggers �
 ### MVP flow
 
 1. `evaluate` loads package; **static** package validator runs (ADR 0001: no untrusted execution by default).
-2. Dangerous patterns (network, absolute writes, destructive shell) → **hard fail**; no script execution.
-3. `output-evaluator` may score textual fixtures **without** invoking Skill scripts.
-4. Report cites file/line evidence; does not “fix” the script.
-5. Human must approve any override/waive (default: no waive in CI).
+2. Dangerous patterns (network, absolute writes, destructive shell) → **hard fail**; no script execution; `hard_gates_passed=false`.
+3. Per RFC §9 short-circuit: **do not** run quality / textual soft scoring after this hard fail (unless debug). Report cites file/line evidence only.
+4. Human must approve any override/waive (default: no waive in CI).
 
 ### Checklist
 

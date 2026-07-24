@@ -18,11 +18,7 @@
     "schema_version": { "$ref": "common.schema.json#/$defs/schemaVersion" },
     "run_id": { "type": "string", "minLength": 1 },
     "skill_name": { "$ref": "common.schema.json#/$defs/skillName" },
-    "overall_score": {
-      "type": "number",
-      "minimum": 0,
-      "maximum": 100
-    },
+    "overall_score": { "$ref": "common.schema.json#/$defs/score0to100" },
     "hard_gates_passed": { "type": "boolean" },
     "criteria": {
       "type": "array",
@@ -63,19 +59,12 @@
         "expected": { "type": "string" },
         "observed": { "type": "string" },
         "passed": { "type": "boolean" },
-        "score": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 100
-        },
+        "score": { "$ref": "common.schema.json#/$defs/score0to100" },
         "evidence": {
           "type": "array",
           "items": { "$ref": "#/$defs/evidenceItem" }
         },
-        "severity": {
-          "type": "string",
-          "enum": ["hard", "quality"]
-        },
+        "severity": { "$ref": "common.schema.json#/$defs/severity" },
         "likely_cause": { "type": ["string", "null"] },
         "minimal_fix": { "type": ["string", "null"] },
         "retest_method": { "type": ["string", "null"] }
@@ -88,7 +77,7 @@
       "properties": {
         "type": {
           "type": "string",
-          "enum": ["command", "report", "file", "trace", "static"]
+          "enum": ["report", "file", "static"]
         },
         "reference": { "type": "string", "minLength": 1 },
         "summary": { "type": "string" }

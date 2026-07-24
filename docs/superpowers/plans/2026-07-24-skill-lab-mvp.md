@@ -58,7 +58,8 @@ See ADR 0001 and RFC §3/§6/§9/§11. Summary:
 **Steps:**
 - [ ] Scaffold Node 20 package (`ajv` OK).
 - [ ] Reuse/wrap `.claude/skills/implement-agent-skills/scripts/check-skill-frontmatter.sh` and `validate-skill-structure.sh` for shared Agent Skills gates where practical.
-- [ ] Implement Skill Lab–specific gates: eval JSON vs frozen schemas; dangerous-script static scan; no `.claude-plugin/` in generated packages; checkpoint select; hard-fail short-circuits soft scoring.
+- [ ] Implement Skill Lab–specific gates: eval JSON vs frozen schemas; dangerous-script static scan; no `.claude-plugin/` in generated packages; emit hard findings only (soft-eval short-circuit is owned by workflow orchestration per RFC §9).
+- [ ] Implement best-valid-checkpoint selection helper used by workflows (single field: `selected_checkpoint`).
 - [ ] Unit tests with fixtures (valid minimal, bad name, dangerous script, hard-vs-quality).
 - [ ] Commit: `feat(skill-lab): deterministic package validator and checkpoint select`
 
@@ -80,7 +81,7 @@ See ADR 0001 and RFC §3/§6/§9/§11. Summary:
 ### Task 4: Workflow skills `create` and `evaluate`
 
 **Steps:**
-- [ ] Orchestration only (progressive disclosure); short-circuit soft eval after hard fail; ≤1 repair; set `selected_checkpoint`.
+- [ ] Orchestration only (progressive disclosure): run validate → short-circuit soft eval after hard fail (RFC §9) → ≤1 repair → set `selected_checkpoint` → any failed `severity: hard` suite assertion invalidates the checkpoint.
 - [ ] Commit: `feat(skill-lab): add create and evaluate workflow skills`
 
 **Acceptance:** `/skill-lab:create` and `/skill-lab:evaluate` documented; evaluate never mutates.

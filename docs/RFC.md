@@ -177,21 +177,25 @@ Downstream agents MUST NOT invent artifacts the level / `artifact_budget` does n
 
 | Level | allow_references | allow_scripts | allow_assets | require_evals |
 | --- | --- | --- | --- | --- |
-| L1 | false | false (true only if justified) | false | false |
+| L1 | false | false | false | false |
 | L2 | false | false | false | **true** |
-| L3 | true | optional | optional | **true** |
+| L3 | true | false | false | **true** |
+
+L3 MAY set `allow_scripts` / `allow_assets` to true only when the intent explicitly needs them; defaults above are what intent-compiler emits unless overridden with justification.
 
 ---
 
 ## 9. Evaluation order
 
-For each checkpoint, orchestration SHALL:
+For each checkpoint, orchestration (workflow skills) SHALL:
 
-1. Run **Verification** hard gates (Appendix B). If any fail → `hard_gates_passed=false`; checkpoint **invalid**; **MUST NOT** run quality / `llm-rubric` assertions for that checkpoint unless a debug flag opts in.
-2. Only when hard gates pass: run allowed **quality** assertions / `output-evaluator` rubrics; record criterion evidence (`severity`: `hard` | `quality`).
-3. Aggregate `overall_score` only as informational for **valid** checkpoints.
-4. Persist results under `.skill-lab/runs/<run-id>/` per run-manifest / evaluation-result contracts.
-5. Select **best valid** checkpoint (highest score among `hard_gates_passed=true`, recorded as `selected_checkpoint`). If none valid → stop with `hard_gate_failed` (or escalate).
+1. Run **Verification** hard gates via `skill-lab-validate` (Appendix B package gates). Package-only gates always apply. Budget/L3 shape gates apply when a `skill-state` is available (create/repair); on bare `evaluate` of an external Skill, skip budget/L3-shape gates rather than inventing state.
+2. If Appendix B (applicable subset) fails → `hard_gates_passed=false`; checkpoint **invalid**; orchestration **MUST NOT** run quality / `llm-rubric` assertions for that checkpoint unless a debug flag opts in. The validator CLI emits hard findings only — it does not own soft-eval policy.
+3. Only when package hard gates pass: run allowed suite assertions / `output-evaluator` rubrics; record criterion evidence (`severity`: `hard` | `quality`).
+4. If any assertion with `severity: hard` fails → set `hard_gates_passed=false` and invalidate the checkpoint (same as Appendix B failure). Soft/`quality` failures do not flip this flag alone.
+5. Aggregate `overall_score` only for checkpoints that remain valid; invalid checkpoints SHOULD record `overall_score: 0`.
+6. Persist results under `.skill-lab/runs/<run-id>/` per run-manifest / evaluation-result contracts.
+7. Select **best valid** checkpoint (highest score among `hard_gates_passed=true`, recorded only as top-level `selected_checkpoint`). If none valid → stop with `hard_gate_failed` (or escalate).
 
 Tokens/cost fields MAY be present but MUST remain `null` unless host-exposed; implementations MUST NOT invent estimates.
 
@@ -304,12 +308,13 @@ All of the following are **blocking** (`severity: hard`). Failure ⇒ checkpoint
 | Name ↔ dir | Frontmatter `name` equals directory name |
 | Name pattern | `^[a-z0-9]+(?:-[a-z0-9]+)*$` (Agent Skills naming) |
 | Description length | ≤ 1024 characters |
-| Layout | No undeclared / disallowed top-level dirs for the declared budget |
+| Layout | No undeclared / disallowed top-level dirs (when `skill-state.artifact_budget` is available; skip on bare evaluate) |
 | Eval schema | Optional eval JSON validates against frozen schemas |
 | Eval IDs | No duplicate case/assertion IDs |
 | Fixtures | Declared fixture paths exist |
-| L3 shape | When `complexity_level=3`, required package/eval presence per compiler budget |
+| L3 shape | When create/repair provides `complexity_level=3`, required package/eval presence per compiler budget (skip on bare evaluate) |
 | Dangerous scripts | Static scan findings (network, destructive shell, `$HOME` writes, etc.) |
 | Portability | Generated Skill MUST NOT contain `.claude-plugin/` |
+| Hard suite assertions | Any output-eval assertion with `severity: hard` that fails (orchestration sets `hard_gates_passed=false`) |
 
 Quality/`llm-rubric` scores are **non-blocking** unless an assertion explicitly sets `severity: hard`. Soft accept for L2/L3 distribution still REQUIRES human approval (§8).

@@ -57,19 +57,12 @@
           ],
           "description": "MVP types only. command/trace deferred until execution adapters exist."
         },
-        "severity": {
-          "type": "string",
-          "enum": ["hard", "quality"]
-        },
+        "severity": { "$ref": "common.schema.json#/$defs/severity" },
         "expected": {
           "description": "For json-schema, prefer a relative path to a schema file (compile once by path/hash). Do not embed full schema JSON as a string.",
           "type": "string"
         },
-        "minimum_score": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 100
-        }
+        "minimum_score": { "$ref": "common.schema.json#/$defs/score0to100" }
       },
       "allOf": [
         {

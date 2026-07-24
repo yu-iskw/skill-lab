@@ -74,7 +74,7 @@ Sibling `evals/<skill-name>/` outside the Skill package is **not** the MVP defau
 
 ### 7. Persistence under `.skill-lab/runs/`
 
-Persist: scores, hashes, timings, tool-use summaries, short rationales, criterion evidence.
+Persist: run manifest (including `selected_checkpoint`), scores, hashes, timings, tool-use summaries, short rationales, criterion evidence.
 
 **Defaults:**
 
@@ -103,7 +103,7 @@ Persist: scores, hashes, timings, tool-use summaries, short rationales, criterio
 ### Positive
 
 - Aligns with existing Node/Docker CI.
-- In-skill `evals/` travel with the Skill (RFC A.2).
+- In-skill `evals/` travel with the Skill (RFC §7 / §13).
 - Static-only MVP validation reduces supply-chain risk.
 - Narrow install and discovery keep the trust boundary deterministic.
 
