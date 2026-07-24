@@ -10,56 +10,64 @@ The plugin exposes two entry points. `/skill-lab:create` generates and may repai
 
 ```mermaid
 flowchart TD
-    U[User request] --> R{Workflow}
+    user["User request"]
+    create["/skill-lab:create"]
+    evaluate["/skill-lab:evaluate"]
 
-    R -->|Create a Skill| C0["/skill-lab:create"]
-    R -->|Evaluate an existing Skill| E0["/skill-lab:evaluate"]
+    user --> create
+    user --> evaluate
 
-    subgraph CREATE[Create workflow]
-        C0 --> IC[Intent compiler subagent]
-        IC --> CT[Structured intent contract and assumptions]
-        CT --> CR{Complexity and safety routing}
-        CR -->|Unsafe executable action| STOP[Documentation-only plan or stop]
-        CR -->|Level 1, 2, or 3| SA[Skill architect subagent]
-        SA --> PKG[Minimal portable Skill package]
-    end
+    create --> collect["Collect request and constraints"]
+    collect --> intent["Run intent-compiler"]
+    intent --> route["Determine complexity level"]
+    route --> safety{"Safe to continue?"}
 
-    subgraph EVALUATE[Evaluation workflow]
-        E0 --> TARGET[Resolve existing Skill package]
-    end
+    safety -->|"No"| stop["Stop or produce a documentation-only plan"]
+    safety -->|"Yes"| architect["Run skill-architect"]
 
-    PKG --> V[Deterministic package validation]
-    TARGET --> V
-    V --> HG{Hard gates pass?}
+    architect --> createValidate["Run skill-lab-validate"]
+    createValidate --> createValid{"Package valid?"}
 
-    HG -->|No| SYN[Synthesize criteria from validator findings]
-    HG -->|Yes| ES{Create complexity level}
-    ES -->|Level 1| L1[Lightweight evidence review]
-    ES -->|Level 2 or 3| OE[Isolated output-evaluator subagent]
-    ES -->|Existing Skill| OE
+    createValid -->|"No"| createSynthesize["Synthesize criteria from validation findings"]
+    createValid -->|"Yes"| createEvaluator["Run output-evaluator"]
 
-    SYN --> AGG[Aggregate criteria into scorecard]
-    L1 --> AGG
-    OE --> AGG
+    createSynthesize --> createAggregate["Run skill-lab-eval aggregate"]
+    createEvaluator --> createAggregate
 
-    AGG --> MODE{Create workflow?}
-    MODE -->|Yes, repair needed and unused| REP[One bounded repair]
-    REP --> V
-    MODE -->|No repair or evaluate-only| CP[Build checkpoint metadata]
+    createAggregate --> repair{"Perform bounded repair?"}
 
-    CP --> CMP[Select best valid checkpoint]
-    CMP --> EV[Persist run evidence under .skill-lab/runs]
-    EV --> REPORT[Report score, assumptions, limitations, and best checkpoint]
+    repair -->|"Yes"| repairStep["Perform one repair"]
+    repairStep --> revalidate["Run skill-lab-validate again"]
+    revalidate --> checkpoints["Build checkpoint records"]
 
-    STOP --> REPORT
+    repair -->|"No"| checkpoints
 
-    classDef agent stroke-width:2px;
-    classDef deterministic stroke-dasharray:5 3;
-    class IC,SA,OE agent;
-    class V,AGG,CMP deterministic;
+    checkpoints --> compare["Run skill-lab-compare"]
+    compare --> select["Select best valid checkpoint"]
+    select --> createEvidence["Persist run evidence"]
+    createEvidence --> createReport["Report created Skill and limitations"]
+
+    evaluate --> resolve["Resolve directory containing SKILL.md"]
+    resolve --> evaluateValidate["Run skill-lab-validate"]
+    evaluateValidate --> evaluateValid{"Package valid?"}
+
+    evaluateValid -->|"No"| evaluateSynthesize["Synthesize criteria from validation findings"]
+    evaluateValid -->|"Yes"| evaluateEvaluator["Run output-evaluator"]
+
+    evaluateSynthesize --> evaluateAggregate["Run skill-lab-eval aggregate"]
+    evaluateEvaluator --> evaluateAggregate
+
+    evaluateAggregate --> multiple{"Multiple checkpoints?"}
+
+    multiple -->|"Yes"| evaluateCompare["Run skill-lab-compare"]
+    multiple -->|"No"| evaluateEvidence["Persist scorecard and evidence"]
+
+    evaluateCompare --> evaluateEvidence
+    evaluateEvidence --> evaluateReport["Report evaluation results"]
+    evaluateReport --> unchanged["Do not modify the target Skill"]
 ```
 
-Solid bordered nodes represent LLM-driven skills or subagents; dashed borders represent deterministic CLI checks. A failed hard gate cannot be offset by a high average score, and the evaluate workflow never modifies the target Skill.
+A failed hard gate cannot be offset by a high average score. The create workflow permits at most one bounded repair, and the evaluate workflow never modifies the target Skill.
 
 ## Repository layout
 
