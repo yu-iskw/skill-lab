@@ -164,6 +164,13 @@ EOF
 assert_fail "validate rejects non-string trigger id" "${validate}" --json "${tmpdir}/weak-skill"
 assert_fail "eval rejects non-string trigger id" "${eval_bin}" --validate-only "${tmpdir}/weak-skill"
 
+# Non-object case entries must fail closed
+cat >"${tmpdir}/weak-skill/evals/trigger-evals.json" <<'EOF'
+{"cases":[1]}
+EOF
+assert_fail "validate rejects non-object trigger case" "${validate}" --json "${tmpdir}/weak-skill"
+assert_fail "eval rejects non-object trigger case" "${eval_bin}" --validate-only "${tmpdir}/weak-skill"
+
 # Invalid JSON under --json still emits a report
 mkdir -p "${tmpdir}/bad-json/evals"
 cat >"${tmpdir}/bad-json/SKILL.md" <<'EOF'

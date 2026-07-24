@@ -33,60 +33,75 @@ skill_lab_eval_suite_findings() {
 	fi
 
 	local findings
-	findings="$(
+	if ! findings="$(
 		jq -c --arg kind "${kind}" '
 			def case_id:
 				if (.id | type) == "string" and (.id | length) > 0 then .id else "<missing-id>" end;
-			(if type=="array" then . else .cases end) as $cases
-			| if ($cases | type) != "array" then
+			(if type=="array" then . else .cases end) as $raw
+			| if ($raw | type) != "array" then
 					[{code:"EVAL_CASES_MISSING", message:"\($kind): cases array is required"}]
-				elif ($cases | length) < 1 then
+				elif ($raw | length) < 1 then
 					[{code:"EVAL_CASES_EMPTY", message:"\($kind): cases array must be non-empty"}]
 				else
-					(
-						$cases
-						| map(select((.id | type) == "string"))
-						| map(.id)
-						| group_by(.)
-						| map(select(length > 1) | .[0])
-						| map({code:"EVAL_DUPLICATE_ID", message:"\($kind): duplicate case id \(.)"})
-					)
+					($raw | map(select(type == "object"))) as $cases
+					| (
+							$raw
+							| to_entries
+							| map(select(.value | type != "object"))
+							| map({code:"EVAL_CASE_NOT_OBJECT", message:"\($kind): case at index \(.key) must be an object"})
+						)
 					+ (
-						$cases
-						| map(select(.split != null and ((.split | type) != "string" or (.split | IN("train","validation","held-out") | not))))
-						| map({code:"EVAL_SPLIT_INVALID", message:"\($kind): case \(case_id) has invalid split"})
-					)
+							$cases
+							| map(select((.id | type) == "string"))
+							| map(.id)
+							| group_by(.)
+							| map(select(length > 1) | .[0])
+							| map({code:"EVAL_DUPLICATE_ID", message:"\($kind): duplicate case id \(.)"})
+						)
 					+ (
-						if $kind == "trigger" or $kind == "trigger-evals" then
 							$cases
-							| map(select(
-									(.id | type != "string" or length < 1)
-									or (.prompt | type != "string" or length < 1)
-									or (.expected.should_trigger | type != "boolean")
-									or (.tags | type != "array")
-									or (.split | type != "string")
-									or (.rationale | type != "string" or length < 1)
-								))
-							| map({code:"TRIGGER_CASE_INVALID", message:"\($kind): case \(case_id) requires id, prompt, expected.should_trigger, tags, split, rationale"})
-						elif $kind == "output" or $kind == "output-evals" then
-							$cases
-							| map(select(
-									(.id | type != "string" or length < 1)
-									or (.prompt | type != "string" or length < 1)
-									or (.assertions | type != "array" or length < 1)
-									or (.input_files | type != "array")
-									or (.human_review_points | type != "array")
-									or (.split | type != "string")
-								))
-							| map({code:"OUTPUT_CASE_INVALID", message:"\($kind): case \(case_id) requires id, prompt, assertions, input_files, human_review_points, split"})
-						else
-							[]
-						end
-					)
+							| map(select(.split != null and ((.split | type) != "string" or (.split | IN("train","validation","held-out") | not))))
+							| map({code:"EVAL_SPLIT_INVALID", message:"\($kind): case \(case_id) has invalid split"})
+						)
+					+ (
+							if $kind == "trigger" or $kind == "trigger-evals" then
+								$cases
+								| map(select(
+										(.id | type != "string" or length < 1)
+										or (.prompt | type != "string" or length < 1)
+										or (.expected.should_trigger | type != "boolean")
+										or (.tags | type != "array")
+										or (.split | type != "string")
+										or (.rationale | type != "string" or length < 1)
+									))
+								| map({code:"TRIGGER_CASE_INVALID", message:"\($kind): case \(case_id) requires id, prompt, expected.should_trigger, tags, split, rationale"})
+							elif $kind == "output" or $kind == "output-evals" then
+								$cases
+								| map(select(
+										(.id | type != "string" or length < 1)
+										or (.prompt | type != "string" or length < 1)
+										or (.assertions | type != "array" or length < 1)
+										or (.input_files | type != "array")
+										or (.human_review_points | type != "array")
+										or (.split | type != "string")
+									))
+								| map({code:"OUTPUT_CASE_INVALID", message:"\($kind): case \(case_id) requires id, prompt, assertions, input_files, human_review_points, split"})
+							else
+								[]
+							end
+						)
 				end
-		' "${path}"
-	)"
+		' "${path}" 2>/dev/null
+	)"; then
+		jq -nc --arg kind "${kind}" '[{code:"EVAL_CHECK_FAILED", message:($kind + ": unable to evaluate suite")}]'
+		return 1
+	fi
+
+	if [[ -z ${findings} ]]; then
+		jq -nc --arg kind "${kind}" '[{code:"EVAL_CHECK_FAILED", message:($kind + ": unable to evaluate suite")}]'
+		return 1
+	fi
 
 	printf '%s\n' "${findings}"
-	jq -e 'length == 0' <<<"${findings}" >/dev/null
+	jq -e 'type == "array" and length == 0' <<<"${findings}" >/dev/null
 }

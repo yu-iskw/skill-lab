@@ -160,11 +160,18 @@ validate_eval_file() {
 	local path="$1"
 	local kind="$2"
 	local findings_json
-	findings_json="$(skill_lab_eval_suite_findings "${path}" "${kind}" || true)"
-	while IFS= read -r row; do
-		[[ -z ${row} ]] && continue
-		add_finding error "$(jq -r '.code' <<<"${row}")" "$(jq -r '.message' <<<"${row}")"
-	done < <(jq -c '.[]' <<<"${findings_json}")
+	local status=0
+	findings_json="$(skill_lab_eval_suite_findings "${path}" "${kind}")" || status=$?
+	if [[ -z ${findings_json} ]]; then
+		findings_json="$(jq -nc --arg kind "${kind}" '[{code:"EVAL_CHECK_FAILED", message:($kind + ": unable to evaluate suite")}]')"
+		status=1
+	fi
+	if ((status != 0)) || [[ $(jq 'length' <<<"${findings_json}") -gt 0 ]]; then
+		while IFS= read -r row; do
+			[[ -z ${row} ]] && continue
+			add_finding error "$(jq -r '.code' <<<"${row}")" "$(jq -r '.message' <<<"${row}")"
+		done < <(jq -c '.[]' <<<"${findings_json}")
+	fi
 }
 
 if [[ -f ${skill_dir}/evals/trigger-evals.json ]]; then
