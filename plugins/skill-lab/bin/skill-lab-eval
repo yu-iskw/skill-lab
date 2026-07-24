@@ -42,33 +42,33 @@ out_path=""
 
 while [[ $# -gt 0 ]]; do
 	case "$1" in
-	--validate-only)
-		mode=validate
-		shift
-		skill_dir="${1:-}"
-		[[ -n ${skill_dir} ]] || skill_lab_die "--validate-only requires <skill-dir>"
-		shift
-		;;
-	--aggregate)
-		mode=aggregate
-		shift
-		criteria_path="${1:-}"
-		[[ -n ${criteria_path} ]] || skill_lab_die "--aggregate requires <criteria.json>"
-		shift
-		;;
-	--out)
-		shift
-		out_path="${1:-}"
-		[[ -n ${out_path} ]] || skill_lab_die "--out requires a path"
-		shift
-		;;
-	-h | --help)
-		usage
-		exit 0
-		;;
-	*)
-		skill_lab_die "unknown argument: $1"
-		;;
+		--validate-only)
+			mode=validate
+			shift
+			skill_dir="${1:-}"
+			[[ -n ${skill_dir} ]] || skill_lab_die "--validate-only requires <skill-dir>"
+			shift
+			;;
+		--aggregate)
+			mode=aggregate
+			shift
+			criteria_path="${1:-}"
+			[[ -n ${criteria_path} ]] || skill_lab_die "--aggregate requires <criteria.json>"
+			shift
+			;;
+		--out)
+			shift
+			out_path="${1:-}"
+			[[ -n ${out_path} ]] || skill_lab_die "--out requires a path"
+			shift
+			;;
+		-h | --help)
+			usage
+			exit 0
+			;;
+		*)
+			skill_lab_die "unknown argument: $1"
+			;;
 	esac
 done
 
@@ -170,13 +170,13 @@ aggregate_criteria() {
 }
 
 case "${mode}" in
-validate)
-	validate_skill_evals "${skill_dir}"
-	;;
-aggregate)
-	aggregate_criteria "${criteria_path}"
-	;;
-*)
-	skill_lab_die "unsupported mode: ${mode}"
-	;;
+	validate)
+		validate_skill_evals "${skill_dir}"
+		;;
+	aggregate)
+		aggregate_criteria "${criteria_path}"
+		;;
+	*)
+		skill_lab_die "unsupported mode: ${mode}"
+		;;
 esac

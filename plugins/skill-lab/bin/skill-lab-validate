@@ -38,21 +38,21 @@ skill_dir=""
 
 while [[ $# -gt 0 ]]; do
 	case "$1" in
-	--json)
-		json_output=true
-		shift
-		;;
-	-h | --help)
-		usage
-		exit 0
-		;;
-	-*)
-		skill_lab_die "unknown option: $1"
-		;;
-	*)
-		skill_dir="$1"
-		shift
-		;;
+		--json)
+			json_output=true
+			shift
+			;;
+		-h | --help)
+			usage
+			exit 0
+			;;
+		-*)
+			skill_lab_die "unknown option: $1"
+			;;
+		*)
+			skill_dir="$1"
+			shift
+			;;
 	esac
 done
 
