@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/yu-iskw/skill-lab/docs/contracts/schemas/run-manifest.schema.json",
+  "title": "Skill Lab Run Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "run_id",
+    "workflow",
+    "skill_name",
+    "platform",
+    "plugin_version",
+    "started_at",
+    "budgets",
+    "checkpoints"
+  ],
+  "properties": {
+    "schema_version": { "$ref": "common.schema.json#/$defs/schemaVersion" },
+    "run_id": { "type": "string", "minLength": 1 },
+    "workflow": {
+      "description": "MVP writers MUST use create|evaluate only. Other values are reserved for post-MVP workflows.",
+      "oneOf": [
+        { "$ref": "common.schema.json#/$defs/mvpWorkflow" },
+        { "$ref": "common.schema.json#/$defs/futureWorkflow" }
+      ]
+    },
+    "skill_name": { "$ref": "common.schema.json#/$defs/skillName" },
+    "platform": {
+      "type": "string",
+      "enum": ["claude-code", "other"],
+      "description": "MVP platform is claude-code. Codex is out of MVP; use other only for non-Claude hosts."
+    },
+    "plugin_version": { "type": "string", "minLength": 1 },
+    "model_metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "tokens": { "type": ["number", "null"] },
+        "cost": { "type": ["number", "null"] },
+        "trace_id": { "type": ["string", "null"] }
+      }
+    },
+    "input_hash": { "type": "string" },
+    "eval_suite_hash": { "type": "string" },
+    "started_at": { "type": "string", "format": "date-time" },
+    "ended_at": { "type": "string", "format": "date-time" },
+    "budgets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_iterations"],
+      "properties": {
+        "max_iterations": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10,
+          "description": "MVP default is 1."
+        }
+      }
+    },
+    "checkpoints": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "created_at", "hard_gates_passed"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "created_at": { "type": "string", "format": "date-time" },
+          "package_hash": { "type": "string" },
+          "overall_score": { "$ref": "common.schema.json#/$defs/score0to100" },
+          "hard_gates_passed": { "type": "boolean" }
+        }
+      }
+    },
+    "stop_reason": { "$ref": "common.schema.json#/$defs/stopReason" },
+    "selected_checkpoint": { "type": ["string", "null"] }
+  }
+}
