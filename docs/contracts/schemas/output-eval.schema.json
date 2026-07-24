@@ -49,12 +49,7 @@
         "id": { "$ref": "common.schema.json#/$defs/caseId" },
         "type": {
           "type": "string",
-          "enum": [
-            "json-schema",
-            "static",
-            "llm-rubric",
-            "dangerous-script"
-          ],
+          "enum": ["json-schema", "static", "llm-rubric", "dangerous-script"],
           "description": "MVP types only. command/trace deferred until execution adapters exist."
         },
         "severity": { "$ref": "common.schema.json#/$defs/severity" },

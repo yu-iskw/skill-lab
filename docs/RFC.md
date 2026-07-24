@@ -1,10 +1,10 @@
 # Skill Lab RFC
 
-| Field | Value |
-| --- | --- |
-| **Status** | Accepted for Phase 0 (contracts frozen; MVP planned) |
-| **Date** | 2026-07-24 |
-| **Repo** | [yu-iskw/skill-lab](https://github.com/yu-iskw/skill-lab) |
+| Field      | Value                                                     |
+| ---------- | --------------------------------------------------------- |
+| **Status** | Accepted for Phase 0 (contracts frozen; MVP planned)      |
+| **Date**   | 2026-07-24                                                |
+| **Repo**   | [yu-iskw/skill-lab](https://github.com/yu-iskw/skill-lab) |
 
 > **Supersession note.** The full original draft narrative is superseded by this accepted RFC plus [ADR 0001](decisions/0001-mvp-open-question-defaults.md) and the [MVP plan](superpowers/plans/2026-07-24-skill-lab-mvp.md) for implementation purposes. Normative MUST/SHALL rules below remain binding.
 
@@ -14,11 +14,11 @@
 
 This repository is a **Claude plugin monorepo**, not a greenfield flat Skill Lab tree. Placement SHALL be:
 
-| Concern | Path |
-| --- | --- |
-| Product plugin | `plugins/skill-lab/` |
+| Concern                         | Path                                                         |
+| ------------------------------- | ------------------------------------------------------------ |
+| Product plugin                  | `plugins/skill-lab/`                                         |
 | Frozen contracts / JSON Schemas | `docs/contracts/schemas/` (source of truth; plugin may copy) |
-| Sample plugin | Retain `plugins/hello-world/` unless a later ADR removes it |
+| Sample plugin                   | Retain `plugins/hello-world/` unless a later ADR removes it  |
 
 Skill Lab product self-evals live under `plugins/skill-lab/evals/`. Generated portable Skills MUST NOT embed `.claude-plugin/` manifests.
 
@@ -119,26 +119,26 @@ flowchart TB
   P --> X
 ```
 
-| Plane | Responsibility |
-| --- | --- |
-| **Interaction** | User-facing workflow skills; slash commands; human gates. |
+| Plane             | Responsibility                                                            |
+| ----------------- | ------------------------------------------------------------------------- |
+| **Interaction**   | User-facing workflow skills; slash commands; human gates.                 |
 | **Orchestration** | Route by complexity; enforce budgets; order eval vs repair; stop reasons. |
-| **Reasoning** | Subagents for intent, package authorship, soft judgment. |
-| **Verification** | Schema/static/security hard gates; score aggregation; checkpoint select. |
-| **Artifacts** | Portable Skill trees, curated `evals/`, run manifests and evidence. |
+| **Reasoning**     | Subagents for intent, package authorship, soft judgment.                  |
+| **Verification**  | Schema/static/security hard gates; score aggregation; checkpoint select.  |
+| **Artifacts**     | Portable Skill trees, curated `evals/`, run manifests and evidence.       |
 
 ---
 
 ## 6. Component responsibilities (MVP)
 
-| Component | Plane | MUST | MUST NOT |
-| --- | --- | --- | --- |
-| `create` skill | Interaction/Orchestration | Compile → route → architect → validate → ≤1 repair → select checkpoint → report | Silently overwrite installed Skills without an improve contract |
-| `evaluate` skill | Interaction/Orchestration | Load path; validate; soft-eval as allowed; write `.skill-lab/runs/` | Mutate the target Skill |
-| `intent-compiler` | Reasoning | Emit `skill-state` (`schema_version` `1.0.0`); set `complexity_level` ∈ {1,2,3} and `artifact_budget`; list assumptions & irreversible actions | Invent unjustified artifacts |
-| `skill-architect` | Reasoning | Write minimal portable package under target path; produce checkpoints | Embed `.claude-plugin/` in generated Skills; self-grade as pass |
-| `output-evaluator` | Reasoning | Score criteria with evidence; record judge model id; read-only toward Skills | Write/Edit Skill files or expected eval outputs; **execute Skill `scripts/`** (MVP) |
-| `skill-lab-validate` | Verification | Enforce Appendix B **package** hard gates (structure, naming, static dangerous-script, applicable budget/L2-evals/L3-shape when `skill-state` is provided); emit structured findings | Execute untrusted Skill scripts (MVP); own soft-eval / suite-assertion orchestration |
+| Component            | Plane                     | MUST                                                                                                                                                                                 | MUST NOT                                                                             |
+| -------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| `create` skill       | Interaction/Orchestration | Compile → route → architect → validate → ≤1 repair → select checkpoint → report                                                                                                      | Silently overwrite installed Skills without an improve contract                      |
+| `evaluate` skill     | Interaction/Orchestration | Load path; validate; soft-eval as allowed; write `.skill-lab/runs/`                                                                                                                  | Mutate the target Skill                                                              |
+| `intent-compiler`    | Reasoning                 | Emit `skill-state` (`schema_version` `1.0.0`); set `complexity_level` ∈ {1,2,3} and `artifact_budget`; list assumptions & irreversible actions                                       | Invent unjustified artifacts                                                         |
+| `skill-architect`    | Reasoning                 | Write minimal portable package under target path; produce checkpoints                                                                                                                | Embed `.claude-plugin/` in generated Skills; self-grade as pass                      |
+| `output-evaluator`   | Reasoning                 | Score criteria with evidence; record judge model id; read-only toward Skills                                                                                                         | Write/Edit Skill files or expected eval outputs; **execute Skill `scripts/`** (MVP)  |
+| `skill-lab-validate` | Verification              | Enforce Appendix B **package** hard gates (structure, naming, static dangerous-script, applicable budget/L2-evals/L3-shape when `skill-state` is provided); emit structured findings | Execute untrusted Skill scripts (MVP); own soft-eval / suite-assertion orchestration |
 
 **Deferred (post-MVP):** workflows `improve`, `diagnose-trigger`, `extract-from-session`; agents `trigger-evaluator`, `adversarial-reviewer`, `repair-planner`; hooks; MCP; Codex adapter; execution sandbox.
 
@@ -165,21 +165,21 @@ skills/<name>/
 
 `intent-compiler` SHALL emit `complexity_level`:
 
-| Level | When | Artifact posture | Accept posture |
-| --- | --- | --- | --- |
-| **L1** | Deterministic I/O, structural checks | Thin: usually `SKILL.md` (+ tiny `scripts/` only if justified) | Hard gates; soft judge optional |
-| **L2** | Subjective quality / rubrics | `SKILL.md` + curated `evals/`; soft scores required | **Human approval** before distribution accept |
-| **L3** | Multi-artifact / app-dev workflows | Richer package (`references/`, optional `scripts/`, `evals/`) | Hard gates strict; soft + **human** first accept; security review when scripts present |
+| Level  | When                                 | Artifact posture                                               | Accept posture                                                                         |
+| ------ | ------------------------------------ | -------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| **L1** | Deterministic I/O, structural checks | Thin: usually `SKILL.md` (+ tiny `scripts/` only if justified) | Hard gates; soft judge optional                                                        |
+| **L2** | Subjective quality / rubrics         | `SKILL.md` + curated `evals/`; soft scores required            | **Human approval** before distribution accept                                          |
+| **L3** | Multi-artifact / app-dev workflows   | Richer package (`references/`, optional `scripts/`, `evals/`)  | Hard gates strict; soft + **human** first accept; security review when scripts present |
 
 Downstream agents MUST NOT invent artifacts the level / `artifact_budget` does not justify.
 
 **Default `artifact_budget` by level** (intent-compiler MUST emit explicit booleans; these are the expected defaults):
 
 | Level | allow_references | allow_scripts | allow_assets | require_evals |
-| --- | --- | --- | --- | --- |
-| L1 | false | false | false | false |
-| L2 | false | false | false | **true** |
-| L3 | true | false | false | **true** |
+| ----- | ---------------- | ------------- | ------------ | ------------- |
+| L1    | false            | false         | false        | false         |
+| L2    | false            | false         | false        | **true**      |
+| L3    | true             | false         | false        | **true**      |
 
 L3 MAY set `allow_scripts` / `allow_assets` to true only when the intent explicitly needs them; defaults above are what intent-compiler emits unless overridden with justification.
 
@@ -205,13 +205,13 @@ MVP assertion types for output suites: `static`, `json-schema`, `llm-rubric`, `d
 
 ## 10. Repair defaults
 
-| Rule | Normative default | MVP override |
-| --- | --- | --- |
-| `budgets.max_iterations` | 3 (full product default; deferred) | **1** |
-| Repair triggers | Hard-gate failures / missing required eval stubs | Same |
-| Soft-score chasing | MUST NOT drive unbounded rewrite loops | Same |
-| After budget | Stop; report; escalate to human if needed | Same |
-| Selection | Best **valid** checkpoint | Same |
+| Rule                     | Normative default                                | MVP override |
+| ------------------------ | ------------------------------------------------ | ------------ |
+| `budgets.max_iterations` | 3 (full product default; deferred)               | **1**        |
+| Repair triggers          | Hard-gate failures / missing required eval stubs | Same         |
+| Soft-score chasing       | MUST NOT drive unbounded rewrite loops           | Same         |
+| After budget             | Stop; report; escalate to human if needed        | Same         |
+| Selection                | Best **valid** checkpoint                        | Same         |
 
 Stop reasons include: `target_reached`, `budget_exhausted`, `plateau`, `same_failure_repeated`, `human_required`, `hard_gate_failed`, `completed`.
 
@@ -241,14 +241,14 @@ Under `.skill-lab/runs/<run-id>/`, persist: scores, hashes, timings, tool-use su
 
 Frozen at `schema_version` **`1.0.0`** in `docs/contracts/schemas/` (source of truth; see ADR 0001 sync rule):
 
-| Schema | MVP consumer |
-| --- | --- |
-| `common.schema.json` | Shared `$defs` |
-| `skill-state.schema.json` | create / intent-compiler |
-| `run-manifest.schema.json` | create / evaluate |
-| `evaluation-result.schema.json` | create / evaluate |
-| `output-eval.schema.json` | create / evaluate |
-| `trigger-eval.schema.json` | **Post-MVP only** (frozen for forward compatibility; not used by create/evaluate) |
+| Schema                          | MVP consumer                                                                      |
+| ------------------------------- | --------------------------------------------------------------------------------- |
+| `common.schema.json`            | Shared `$defs`                                                                    |
+| `skill-state.schema.json`       | create / intent-compiler                                                          |
+| `run-manifest.schema.json`      | create / evaluate                                                                 |
+| `evaluation-result.schema.json` | create / evaluate                                                                 |
+| `output-eval.schema.json`       | create / evaluate                                                                 |
+| `trigger-eval.schema.json`      | **Post-MVP only** (frozen for forward compatibility; not used by create/evaluate) |
 
 **Evolution:** ADR 0001.
 
@@ -301,21 +301,21 @@ Prioritize: (1) minimal deterministic, (2) subjective writing, (3) boundary/dang
 
 All of the following are **blocking** (`severity: hard`). Failure ⇒ checkpoint invalid.
 
-| Gate | Rule |
-| --- | --- |
-| Package root | Target directory contains `SKILL.md` |
-| Frontmatter | YAML includes `name` and `description` |
-| Name ↔ dir | Frontmatter `name` equals directory name |
-| Name pattern | `^[a-z0-9]+(?:-[a-z0-9]+)*$` (Agent Skills naming) |
-| Description length | ≤ 1024 characters |
-| Layout | No undeclared / disallowed top-level dirs (when `skill-state.artifact_budget` is available; skip on bare evaluate) |
-| Eval schema | Optional eval JSON validates against frozen schemas |
-| Eval IDs | No duplicate case/assertion IDs |
-| Fixtures | Declared fixture paths exist |
-| L3 shape | When create/repair provides `complexity_level=3`, required package/eval presence per compiler budget (skip on bare evaluate) |
-| L2 evals | When create/repair provides `complexity_level=2` (or `artifact_budget.require_evals=true`), `evals/` with at least one valid output-eval suite MUST exist (skip on bare evaluate) |
-| Dangerous scripts | Static scan findings (network, destructive shell, `$HOME` writes, etc.) |
-| Portability | Generated Skill MUST NOT contain `.claude-plugin/` |
-| Hard suite assertions | Any output-eval assertion with `severity: hard` that fails — enforced by **orchestration** (workflow skills), not by `skill-lab-validate` |
+| Gate                  | Rule                                                                                                                                                                              |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Package root          | Target directory contains `SKILL.md`                                                                                                                                              |
+| Frontmatter           | YAML includes `name` and `description`                                                                                                                                            |
+| Name ↔ dir            | Frontmatter `name` equals directory name                                                                                                                                          |
+| Name pattern          | `^[a-z0-9]+(?:-[a-z0-9]+)*$` (Agent Skills naming)                                                                                                                                |
+| Description length    | ≤ 1024 characters                                                                                                                                                                 |
+| Layout                | No undeclared / disallowed top-level dirs (when `skill-state.artifact_budget` is available; skip on bare evaluate)                                                                |
+| Eval schema           | Optional eval JSON validates against frozen schemas                                                                                                                               |
+| Eval IDs              | No duplicate case/assertion IDs                                                                                                                                                   |
+| Fixtures              | Declared fixture paths exist                                                                                                                                                      |
+| L3 shape              | When create/repair provides `complexity_level=3`, required package/eval presence per compiler budget (skip on bare evaluate)                                                      |
+| L2 evals              | When create/repair provides `complexity_level=2` (or `artifact_budget.require_evals=true`), `evals/` with at least one valid output-eval suite MUST exist (skip on bare evaluate) |
+| Dangerous scripts     | Static scan findings (network, destructive shell, `$HOME` writes, etc.)                                                                                                           |
+| Portability           | Generated Skill MUST NOT contain `.claude-plugin/`                                                                                                                                |
+| Hard suite assertions | Any output-eval assertion with `severity: hard` that fails — enforced by **orchestration** (workflow skills), not by `skill-lab-validate`                                         |
 
 Quality/`llm-rubric` scores are **non-blocking** unless an assertion explicitly sets `severity: hard`. Soft accept for L2/L3 distribution still REQUIRES human approval (§8).

@@ -8,11 +8,11 @@ Validates Approach D (hybrid Claude Code plugin: workflow skills + subagents + d
 
 ## Routing (RFC Level 1 / 2 / 3)
 
-| Level | When | Create path | Eval posture |
-| --- | --- | --- | --- |
-| **L1** | Deterministic I/O, structural checks, little judgment | Thin: `intent-compiler` → `skill-architect` → static gates | Hard gates only; soft judge optional/off |
-| **L2** | Subjective quality, rubrics, taste | Full MVP create; curated soft evals required | Soft scores + human accept on ship |
-| **L3** | Multi-artifact / app-dev workflows | Full MVP + richer package plan | Hard gates strict; soft + human; security review when scripts present |
+| Level  | When                                                  | Create path                                                | Eval posture                                                          |
+| ------ | ----------------------------------------------------- | ---------------------------------------------------------- | --------------------------------------------------------------------- |
+| **L1** | Deterministic I/O, structural checks, little judgment | Thin: `intent-compiler` → `skill-architect` → static gates | Hard gates only; soft judge optional/off                              |
+| **L2** | Subjective quality, rubrics, taste                    | Full MVP create; curated soft evals required               | Soft scores + human accept on ship                                    |
+| **L3** | Multi-artifact / app-dev workflows                    | Full MVP + richer package plan                             | Hard gates strict; soft + human; security review when scripts present |
 
 `intent-compiler` emits `complexity_level` ∈ {1,2,3}. Downstream agents must not invent artifacts the level does not justify.
 
@@ -34,7 +34,7 @@ Validates Approach D (hybrid Claude Code plugin: workflow skills + subagents + d
 
 **Route:** **Level 1**
 
-### MVP flow
+### Scenario 1 flow
 
 1. `create` → `intent-compiler` → plan: L1, SKILL.md (+ tiny `scripts/` only if justified).
 2. `skill-architect` writes portable package under target `skills/<name>/`.
@@ -42,17 +42,17 @@ Validates Approach D (hybrid Claude Code plugin: workflow skills + subagents + d
 4. Optional `evaluate`: structural fixtures only; `output-evaluator` uses **static** assertions (MVP MUST NOT execute Skill `scripts/` for exit/stdout).
 5. No soft rubric; no human gate unless author opts in to publish.
 
-### Checklist
+### Scenario 1 checklist
 
-| Criterion | Result |
-| --- | --- |
-| Boundaries | Compiler plans; architect writes; validators/evaluator read-only. |
-| Artifacts | SKILL.md required; `scripts/` only if L1 plan says so; no unnecessary references/hooks. |
-| Hard gates | Schema/name/layout fail → block; observable in CLI + `.skill-lab/runs/`. |
-| Non-mutating eval | `evaluate` / `output-evaluator` never write Skill files. |
-| Bounded repair | Architect may retry ≤ N (default 1 in MVP) on hard-gate fail; then stop with report. |
-| Human approval | Not required for L1 local iterate. |
-| Portable vs Claude | Output is portable Agent Skill; no `.claude-plugin/` inside generated Skill. |
+| Criterion          | Result                                                                                  |
+| ------------------ | --------------------------------------------------------------------------------------- |
+| Boundaries         | Compiler plans; architect writes; validators/evaluator read-only.                       |
+| Artifacts          | SKILL.md required; `scripts/` only if L1 plan says so; no unnecessary references/hooks. |
+| Hard gates         | Schema/name/layout fail → block; observable in CLI + `.skill-lab/runs/`.                |
+| Non-mutating eval  | `evaluate` / `output-evaluator` never write Skill files.                                |
+| Bounded repair     | Architect may retry ≤ N (default 1 in MVP) on hard-gate fail; then stop with report.    |
+| Human approval     | Not required for L1 local iterate.                                                      |
+| Portable vs Claude | Output is portable Agent Skill; no `.claude-plugin/` inside generated Skill.            |
 
 **Verdict:** RFC holds — L1 routing prevents overbuild.
 
@@ -64,7 +64,7 @@ Validates Approach D (hybrid Claude Code plugin: workflow skills + subagents + d
 
 **Route:** **Level 2**
 
-### MVP flow
+### Scenario 2 flow
 
 1. `intent-compiler` → L2; success criteria as rubric dimensions.
 2. `skill-architect` → SKILL.md + `evals/` with fixtures.
@@ -72,17 +72,17 @@ Validates Approach D (hybrid Claude Code plugin: workflow skills + subagents + d
 4. `evaluate` → `output-evaluator` applies rubric; records judge model id.
 5. Ship/accept requires **human approval** of soft scores (or explicit waive).
 
-### Checklist
+### Scenario 2 checklist
 
-| Criterion | Result |
-| --- | --- |
-| Boundaries | Soft judgment stays in `output-evaluator`; architect does not self-grade into a pass. |
-| Artifacts | Rubric + eval fixtures justified; no scripts/hooks unless plan demands. |
-| Hard gates | Invalid package still blocks; soft score is visible, not a silent hard fail. |
-| Non-mutating eval | Judge writes run records only under `.skill-lab/runs/`. |
-| Bounded repair | Create-loop repair only on hard gates / missing eval stubs. |
-| Human approval | **Required** before treating L2 Skill as accepted for distribution. |
-| Portable vs Claude | Rubric+evals travel in Skill; Skill Lab judge config stays in plugin/project. |
+| Criterion          | Result                                                                                |
+| ------------------ | ------------------------------------------------------------------------------------- |
+| Boundaries         | Soft judgment stays in `output-evaluator`; architect does not self-grade into a pass. |
+| Artifacts          | Rubric + eval fixtures justified; no scripts/hooks unless plan demands.               |
+| Hard gates         | Invalid package still blocks; soft score is visible, not a silent hard fail.          |
+| Non-mutating eval  | Judge writes run records only under `.skill-lab/runs/`.                               |
+| Bounded repair     | Create-loop repair only on hard gates / missing eval stubs.                           |
+| Human approval     | **Required** before treating L2 Skill as accepted for distribution.                   |
+| Portable vs Claude | Rubric+evals travel in Skill; Skill Lab judge config stays in plugin/project.         |
 
 **Verdict:** RFC holds — L2 forces human gate on subjective accept.
 
@@ -94,7 +94,7 @@ Validates Approach D (hybrid Claude Code plugin: workflow skills + subagents + d
 
 **Route:** **Level 3**
 
-### MVP flow
+### Scenario 3 flow
 
 1. `intent-compiler` → L3 plan: SKILL.md + `references/` + optional `scripts/` + curated `evals/`.
 2. `skill-architect` emits progressive-disclosure layout; trigger text remains in SKILL.md description/body as appropriate.
@@ -102,17 +102,17 @@ Validates Approach D (hybrid Claude Code plugin: workflow skills + subagents + d
 4. `evaluate` runs fixture prompts; `output-evaluator` checks expectations + package invariants.
 5. Human approval for first accept of L3 Skills.
 
-### Checklist
+### Scenario 3 checklist
 
-| Criterion | Result |
-| --- | --- |
-| Boundaries | Architect builds package; evaluator judges; create orchestrates only. |
-| Artifacts | Multi-file OK because L3; reject unrelated agents/hooks/MCP inside portable Skill. |
-| Hard gates | L3 minimum package shape + static script lint are blocking and logged. |
-| Non-mutating eval | Same as other levels. |
-| Bounded repair | Retries only against gate diffs; cap N then escalate to human. |
-| Human approval | **Required** for initial L3 accept. |
-| Portable vs Claude | Skill remains host-portable; Claude plugin packaging is Skill Lab’s concern. |
+| Criterion          | Result                                                                             |
+| ------------------ | ---------------------------------------------------------------------------------- |
+| Boundaries         | Architect builds package; evaluator judges; create orchestrates only.              |
+| Artifacts          | Multi-file OK because L3; reject unrelated agents/hooks/MCP inside portable Skill. |
+| Hard gates         | L3 minimum package shape + static script lint are blocking and logged.             |
+| Non-mutating eval  | Same as other levels.                                                              |
+| Bounded repair     | Retries only against gate diffs; cap N then escalate to human.                     |
+| Human approval     | **Required** for initial L3 accept.                                                |
+| Portable vs Claude | Skill remains host-portable; Claude plugin packaging is Skill Lab’s concern.       |
 
 **Verdict:** RFC holds — L3 licenses complexity without collapsing into a mini-plugin.
 
@@ -130,11 +130,11 @@ MVP has **no** `improve` skill. Closest path: human edits description/triggers �
 
 **Paper path (post-MVP):** `improve` + trigger evaluator + neighbor confusion tests + bounded repair + human approval of description changes.
 
-| Criterion | MVP | Post-MVP |
-| --- | --- | --- |
-| Boundaries | Eval-only diagnosis; no autonomous rewrite. | `improve` ≠ `create`. |
-| Non-mutating eval | Yes. | Yes; repair is separate mutating stage. |
-| Human approval | Any rewrite is human-driven in MVP. | **Required** for trigger/description changes. |
+| Criterion         | MVP                                         | Post-MVP                                      |
+| ----------------- | ------------------------------------------- | --------------------------------------------- |
+| Boundaries        | Eval-only diagnosis; no autonomous rewrite. | `improve` ≠ `create`.                         |
+| Non-mutating eval | Yes.                                        | Yes; repair is separate mutating stage.       |
+| Human approval    | Any rewrite is human-driven in MVP.         | **Required** for trigger/description changes. |
 
 **Verdict:** Architecture holds; **scenario 4 is out of MVP scope**. MVP correctly degrades to non-mutating evaluation.
 
@@ -144,23 +144,23 @@ MVP has **no** `improve` skill. Closest path: human edits description/triggers �
 
 **Example intent:** Skill ships `scripts/validate.sh` that curls the network, writes `$HOME`, or `rm -rf`.
 
-### MVP flow
+### Scenario 5 flow
 
 1. `evaluate` loads package; **static** package validator runs (ADR 0001: no untrusted execution by default).
 2. Dangerous patterns (network, absolute writes, destructive shell) → **hard fail**; no script execution; `hard_gates_passed=false`.
 3. Per RFC §9 short-circuit: **do not** run quality / textual soft scoring after this hard fail (unless debug). Report cites file/line evidence only.
 4. Human must approve any override/waive (default: no waive in CI).
 
-### Checklist
+### Scenario 5 checklist
 
-| Criterion | Result |
-| --- | --- |
-| Boundaries | Static security/policy checks ≠ LLM judge. |
-| Artifacts | No repair artifacts invented during evaluate. |
-| Hard gates | Dangerous-script findings are blocking and persisted. |
-| Non-mutating eval | Evaluator reports only. |
-| Bounded repair | Out of band; evaluate does not loop mutate. |
-| Human approval | Required to force-continue past security hard fail. |
+| Criterion          | Result                                                        |
+| ------------------ | ------------------------------------------------------------- |
+| Boundaries         | Static security/policy checks ≠ LLM judge.                    |
+| Artifacts          | No repair artifacts invented during evaluate.                 |
+| Hard gates         | Dangerous-script findings are blocking and persisted.         |
+| Non-mutating eval  | Evaluator reports only.                                       |
+| Bounded repair     | Out of band; evaluate does not loop mutate.                   |
+| Human approval     | Required to force-continue past security hard fail.           |
 | Portable vs Claude | Policy engine lives in Skill Lab plugin/CLI; Skill unchanged. |
 
 **Verdict:** RFC holds for MVP **if** static dangerous-script gate is in the validator (MVP-critical).
@@ -169,13 +169,13 @@ MVP has **no** `improve` skill. Closest path: human edits description/triggers �
 
 ## Cross-scenario matrix
 
-| Scenario | Level | MVP components | Deferred | Human gate |
-| --- | --- | --- | --- | --- |
-| 1 Minimal deterministic | L1 | create, intent-compiler, skill-architect, validators, evaluate, output-evaluator | execution adapter | Optional |
-| 2 Subjective writing | L2 | same + in-skill evals | improve, richer suites | **Yes** (accept) |
-| 3 Complex app-dev | L3 | same + richer package | trigger-evaluator, adversarial-reviewer | **Yes** (first accept) |
-| 4 False-positive improve | inherits | evaluate diagnosis only | **improve**, trigger-evaluator | **Yes** (trigger edits) |
-| 5 Dangerous script | any | evaluate, static validators | execution sandbox | **Yes** (waive only) |
+| Scenario                 | Level    | MVP components                                                                   | Deferred                                | Human gate              |
+| ------------------------ | -------- | -------------------------------------------------------------------------------- | --------------------------------------- | ----------------------- |
+| 1 Minimal deterministic  | L1       | create, intent-compiler, skill-architect, validators, evaluate, output-evaluator | execution adapter                       | Optional                |
+| 2 Subjective writing     | L2       | same + in-skill evals                                                            | improve, richer suites                  | **Yes** (accept)        |
+| 3 Complex app-dev        | L3       | same + richer package                                                            | trigger-evaluator, adversarial-reviewer | **Yes** (first accept)  |
+| 4 False-positive improve | inherits | evaluate diagnosis only                                                          | **improve**, trigger-evaluator          | **Yes** (trigger edits) |
+| 5 Dangerous script       | any      | evaluate, static validators                                                      | execution sandbox                       | **Yes** (waive only)    |
 
 ## Validated constraints (already in RFC / ADR 0001)
 

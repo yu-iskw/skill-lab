@@ -21,17 +21,17 @@ See ADR 0001 and RFC §3/§6/§9/§11. Summary:
 
 ## File map (create / modify)
 
-| Path | Responsibility |
-| --- | --- |
-| `plugins/skill-lab/.claude-plugin/plugin.json` | Plugin manifest |
-| `plugins/skill-lab/skills/create/SKILL.md` | Create orchestration |
-| `plugins/skill-lab/skills/evaluate/SKILL.md` | Evaluate orchestration (non-mutating) |
-| `plugins/skill-lab/agents/*.md` | Three MVP subagents |
-| `plugins/skill-lab/schemas/` | Symlink or CI-gated mirror of `docs/contracts/schemas/` |
-| `plugins/skill-lab/bin/skill-lab-validate` | CLI entry |
-| `plugins/skill-lab/cli/` | TypeScript validator sources |
-| `plugins/skill-lab/evals/fixtures/` | Three corpus Skills (self-tests, not user-installed skills) |
-| Marketplace JSON ×3 | Register `skill-lab` |
+| Path                                           | Responsibility                                              |
+| ---------------------------------------------- | ----------------------------------------------------------- |
+| `plugins/skill-lab/.claude-plugin/plugin.json` | Plugin manifest                                             |
+| `plugins/skill-lab/skills/create/SKILL.md`     | Create orchestration                                        |
+| `plugins/skill-lab/skills/evaluate/SKILL.md`   | Evaluate orchestration (non-mutating)                       |
+| `plugins/skill-lab/agents/*.md`                | Three MVP subagents                                         |
+| `plugins/skill-lab/schemas/`                   | Symlink or CI-gated mirror of `docs/contracts/schemas/`     |
+| `plugins/skill-lab/bin/skill-lab-validate`     | CLI entry                                                   |
+| `plugins/skill-lab/cli/`                       | TypeScript validator sources                                |
+| `plugins/skill-lab/evals/fixtures/`            | Three corpus Skills (self-tests, not user-installed skills) |
+| Marketplace JSON ×3                            | Register `skill-lab`                                        |
 
 ---
 
@@ -40,6 +40,7 @@ See ADR 0001 and RFC §3/§6/§9/§11. Summary:
 **Files:** `plugins/skill-lab/.claude-plugin/plugin.json`, marketplaces, schemas link, README
 
 **Steps:**
+
 - [ ] Clone layout from `plugins/hello-world/` (trim MCP/LSP/hooks; hooks not required for skill-lab MVP — use `integration_tests/` discovery, not `implement-plugin` hooks-required structure check as a hard gate).
 - [ ] Follow `.claude/skills/implement-plugin/` for manifest fields.
 - [ ] Symlink or CI-diff-gate `plugins/skill-lab/schemas` → `docs/contracts/schemas` (ADR 0001).
@@ -56,6 +57,7 @@ See ADR 0001 and RFC §3/§6/§9/§11. Summary:
 **Files:** under `plugins/skill-lab/cli/` + `bin/skill-lab-validate`
 
 **Steps:**
+
 - [ ] Scaffold Node 20 package (`ajv` OK).
 - [ ] Reuse/wrap `.claude/skills/implement-agent-skills/scripts/check-skill-frontmatter.sh` and `validate-skill-structure.sh` for shared Agent Skills gates where practical.
 - [ ] Implement Skill Lab–specific gates: eval JSON vs frozen schemas; dangerous-script static scan; no `.claude-plugin/` in generated packages; emit hard findings only (soft-eval short-circuit is owned by workflow orchestration per RFC §9).
@@ -70,6 +72,7 @@ See ADR 0001 and RFC §3/§6/§9/§11. Summary:
 ### Task 3: Subagents
 
 **Steps:**
+
 - [ ] Author three agents per ADR 0001 tool posture table + `.claude/skills/implement-sub-agents/` templates.
 - [ ] `output-evaluator`: read-only toward Skills; may invoke `skill-lab-validate`; MUST NOT execute Skill `scripts/`.
 - [ ] Commit: `feat(skill-lab): add MVP subagents`
@@ -81,6 +84,7 @@ See ADR 0001 and RFC §3/§6/§9/§11. Summary:
 ### Task 4: Workflow skills `create` and `evaluate`
 
 **Steps:**
+
 - [ ] Orchestration only (progressive disclosure): run validate → short-circuit soft eval after hard fail (RFC §9) → ≤1 repair → set `selected_checkpoint` → any failed `severity: hard` suite assertion invalidates the checkpoint.
 - [ ] Commit: `feat(skill-lab): add create and evaluate workflow skills`
 
@@ -95,6 +99,7 @@ See ADR 0001 and RFC §3/§6/§9/§11. Summary:
 Corpus Skills live under `evals/fixtures/` (product self-tests). Each fixture is a portable Skill tree (`SKILL.md`, optional in-package `evals/` for output suites). They are **not** installed as plugin `skills/`.
 
 **Steps:**
+
 - [ ] Build three fixtures (RFC fixture priority: deterministic, writing, boundary/dangerous-script).
 - [ ] Output-eval JSON only for MVP (no trigger-eval consumption).
 - [ ] Dangerous-script positive fixture must hard-fail static scan.
@@ -107,6 +112,7 @@ Corpus Skills live under `evals/fixtures/` (product self-tests). Each fixture is
 **Already done in Phase 0:** root `.gitignore` (entire `.skill-lab/`), `docs/architecture/overview.md`, root README pointers.
 
 **Steps:**
+
 - [ ] Add `plugins/skill-lab/CHANGELOG.md` and plugin README linking RFC/ADR/plan.
 - [ ] Document run layout from RFC §12.
 - [ ] Commit: `docs(skill-lab): plugin README and changelog`
@@ -116,6 +122,7 @@ Corpus Skills live under `evals/fixtures/` (product self-tests). Each fixture is
 ### Task 7: Integration + Docker CI green
 
 **Steps:**
+
 - [ ] `make lint`
 - [ ] `cd plugins/skill-lab/cli && npm test`
 - [ ] `./integration_tests/run.sh`

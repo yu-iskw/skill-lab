@@ -15,22 +15,22 @@ The RFC left ten open questions that must be pinned before implementation so CLI
 
 ### Monorepo placement
 
-| Concern | MVP default |
-| --- | --- |
-| Product plugin | `plugins/skill-lab/` |
+| Concern                    | MVP default                                                                                                                             |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Product plugin             | `plugins/skill-lab/`                                                                                                                    |
 | Shared contracts / schemas | `docs/contracts/schemas/` (**source of truth**). Plugin MUST symlink or CI-diff-gate `plugins/skill-lab/schemas/` — no unsynced copies. |
-| CLI package | `plugins/skill-lab/cli/` (stay under the plugin; do not invent a top-level `packages/` tree in MVP) |
-| Sample template | Keep `plugins/hello-world/` unless a later ADR removes it |
+| CLI package                | `plugins/skill-lab/cli/` (stay under the plugin; do not invent a top-level `packages/` tree in MVP)                                     |
+| Sample template            | Keep `plugins/hello-world/` unless a later ADR removes it                                                                               |
 
 Skill Lab product self-evals live under `plugins/skill-lab/evals/`.
 
 ### Agent tool posture (MVP)
 
-| Agent | Tools | MUST NOT |
-| --- | --- | --- |
-| `intent-compiler` | Read-oriented | Write Skill packages |
-| `skill-architect` | Scoped write to target Skill path | Embed `.claude-plugin/`; self-grade as pass |
-| `output-evaluator` | Read + run `skill-lab-validate` | Write/Edit Skills or expected evals; **execute Skill `scripts/`** |
+| Agent              | Tools                             | MUST NOT                                                          |
+| ------------------ | --------------------------------- | ----------------------------------------------------------------- |
+| `intent-compiler`  | Read-oriented                     | Write Skill packages                                              |
+| `skill-architect`  | Scoped write to target Skill path | Embed `.claude-plugin/`; self-grade as pass                       |
+| `output-evaluator` | Read + run `skill-lab-validate`   | Write/Edit Skills or expected evals; **execute Skill `scripts/`** |
 
 Follow `.claude/skills/implement-sub-agents/` templates for frontmatter shape.
 
