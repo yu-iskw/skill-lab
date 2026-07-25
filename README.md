@@ -11,6 +11,7 @@ Skill checkpoint produced by creation or a bounded update. A manual
 `/skill-lab:evaluate` run also requires an existing Skill directory containing
 `SKILL.md`; it cannot run without that input artifact.
 
+<!-- prettier-ignore -->
 ```mermaid
 flowchart TD
     request["User requests a new Agent Skill"]
