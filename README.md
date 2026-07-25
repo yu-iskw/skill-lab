@@ -113,16 +113,16 @@ MVP installs via the **Claude** marketplace only. Cursor/Codex marketplace manif
 
 ## Plugin features (MVP)
 
-| Surface              | Purpose                                                                     |
-| -------------------- | --------------------------------------------------------------------------- |
-| `create` skill       | Intent → candidate → validate → evaluate → one update → best checkpoint     |
-| `evaluate` skill     | Evaluate an existing Skill checkpoint without modifying it                  |
-| `intent-compiler`    | Structured intent contract                                                  |
-| `skill-architect`    | Portable package generation                                                 |
-| `output-evaluator`   | Independent rubric assessment                                               |
-| `skill-lab-validate` | Deterministic package + eval structure checks                               |
-| `skill-lab-eval`     | Eval schema checks + score aggregation                                      |
-| `skill-lab-compare`  | Best-valid-checkpoint selection                                             |
+| Surface              | Purpose                                                                 |
+| -------------------- | ----------------------------------------------------------------------- |
+| `create` skill       | Intent → candidate → validate → evaluate → one update → best checkpoint |
+| `evaluate` skill     | Evaluate an existing Skill checkpoint without modifying it              |
+| `intent-compiler`    | Structured intent contract                                              |
+| `skill-architect`    | Portable package generation                                             |
+| `output-evaluator`   | Independent rubric assessment                                           |
+| `skill-lab-validate` | Deterministic package + eval structure checks                           |
+| `skill-lab-eval`     | Eval schema checks + score aggregation                                  |
+| `skill-lab-compare`  | Best-valid-checkpoint selection                                         |
 
 ## Development
 
