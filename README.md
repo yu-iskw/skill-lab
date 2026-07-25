@@ -6,7 +6,10 @@ Skill Lab is a thin workflow-orchestration plugin: reusable domain core as porta
 
 ## End-to-end workflow
 
-Evaluation is not an independent authoring step. It consumes a concrete Agent Skill checkpoint produced by creation or a bounded update. A manual `/skill-lab:evaluate` run also requires an existing Skill directory containing `SKILL.md`; it cannot run without that input artifact.
+Evaluation is not an independent authoring step. It consumes a concrete Agent
+Skill checkpoint produced by creation or a bounded update. A manual
+`/skill-lab:evaluate` run also requires an existing Skill directory containing
+`SKILL.md`; it cannot run without that input artifact.
 
 ```mermaid
 flowchart TD
@@ -21,23 +24,23 @@ flowchart TD
     existing["Existing Agent Skill checkpoint"]
     manual["/skill-lab:evaluate <skill-dir>"]
 
-    evaluationInput["Skill checkpoint, intent contract, and optional eval suites"]
+    evaluationInput["Skill checkpoint and evaluation inputs"]
     validate["Run skill-lab-validate"]
     valid{"Package hard gates pass?"}
-    synthesize["Synthesize criteria from validation findings"]
+    synthesize["Create criteria from validation findings"]
     evaluator["Run output-evaluator"]
     aggregate["Run skill-lab-eval aggregate"]
-    mode{"Authoring run or manual evaluation?"}
+    mode{"Authoring or manual evaluation?"}
     acceptable{"Meets acceptance criteria?"}
-    repairAvailable{"Bounded update still available?"}
-    update["Update the Agent Skill from evaluation findings"]
+    repairAvailable{"Bounded update available?"}
+    update["Update the Skill from evaluation findings"]
     candidate1["Create revised checkpoint c1"]
     checkpoints["Build checkpoint metadata"]
     compare["Run skill-lab-compare"]
     select["Select the best valid checkpoint"]
-    evidence["Persist validation, scorecard, and comparison evidence"]
-    report["Report the selected Skill, score, assumptions, and limitations"]
-    diagnosis["Persist evidence and report diagnosis without modifying the Skill"]
+    evidence["Persist validation and evaluation evidence"]
+    report["Report the selected Skill and limitations"]
+    diagnosis["Report diagnosis without modifying the Skill"]
 
     request --> collect
     collect --> compile
@@ -74,7 +77,11 @@ flowchart TD
     stop --> report
 ```
 
-The dependency is the Skill checkpoint itself. The create workflow evaluates `c0`, may use its evidence to produce one revised checkpoint `c1`, then evaluates `c1` before comparing checkpoints. A standalone evaluation starts from an existing checkpoint and remains non-mutating. A failed hard gate cannot be offset by a high average score.
+The dependency is the Skill checkpoint itself. The create workflow evaluates
+`c0`, may use its evidence to produce one revised checkpoint `c1`, and then
+evaluates `c1` before comparing checkpoints. A standalone evaluation starts
+from an existing checkpoint and remains non-mutating. A failed hard gate cannot
+be offset by a high average score.
 
 ## Repository layout
 
