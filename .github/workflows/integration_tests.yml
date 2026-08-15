@@ -16,7 +16,6 @@ permissions:
 
 jobs:
   skill-lab-unit:
-    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
     name: Skill Lab CLI Unit Tests
     runs-on: ubuntu-latest
     steps:
@@ -28,7 +27,6 @@ jobs:
         run: make test-unit
 
   plugin-install-test:
-    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
     name: Plugin Install Integration Test
     runs-on: ubuntu-latest
     steps:
@@ -44,7 +42,6 @@ jobs:
         run: ./integration_tests/run.sh --verbose
 
   multi-platform-validation:
-    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
     name: Multi-Platform Manifest Validation
     runs-on: ubuntu-latest
     steps:
@@ -56,7 +53,6 @@ jobs:
         run: ./integration_tests/run.sh --manifest-only --verbose
 
   plugin-install-docker:
-    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
     name: Plugin Install in Docker
     runs-on: ubuntu-latest
     steps:
