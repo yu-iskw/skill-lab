@@ -3,3 +3,4 @@ actionlint
 # Skill Lab run evidence (keep scorecards if committed intentionally)
 .skill-lab/runs/*/traces/
 .skill-lab/runs/*/artifacts/
+.claude/settings.local.json
